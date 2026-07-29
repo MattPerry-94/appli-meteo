@@ -330,7 +330,7 @@ export default function Home() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-900 dark:text-zinc-50">{result.name}</div>
+                    <div className="break-words font-medium text-slate-900 dark:text-zinc-50">{result.name}</div>
                     <div className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
                       {[result.postalCode, result.adminArea, result.countryCode].filter(Boolean).join(" • ")}
                     </div>

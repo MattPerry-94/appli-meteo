@@ -36,7 +36,7 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="truncate font-medium text-slate-900 dark:text-white">{city?.name ?? "—"}</div>
+            <div className="break-words font-medium text-slate-900 dark:text-white">{city?.name ?? "—"}</div>
             <div className="mt-1 flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-300">
               <span className="inline-flex items-center gap-1 text-slate-800 dark:text-zinc-200">
                 <KindIcon kind={visual.kind} />

@@ -57,10 +57,10 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
     <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
       <Card className="p-4">
         <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="text-sm text-slate-600 dark:text-zinc-300">Prévisions</div>
-              <div className="truncate font-serif text-2xl tracking-tight">{props.forecastSet?.city.name ?? "—"}</div>
+              <div className="break-words font-serif text-2xl leading-tight tracking-tight">{props.forecastSet?.city.name ?? "—"}</div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="sky">{activeBundle?.modelLabel ?? getForecastViewLabel(activeView)}</Badge>
