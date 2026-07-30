@@ -102,7 +102,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                   type="button"
                   onClick={() => setOpenIndex(idx)}
                   className={cn(
-                    "grid w-full grid-cols-[72px_28px_1fr_auto] items-center gap-3 px-3 py-3 text-left transition",
+                    "grid w-full grid-cols-[72px_28px_minmax(0,1fr)] items-center gap-3 px-3 py-3 text-left transition sm:grid-cols-[72px_28px_1fr_auto]",
                     "hover:bg-slate-900/5 dark:hover:bg-white/5",
                     isOpen && "bg-sky-500/10 dark:bg-white/7",
                   )}
@@ -114,7 +114,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                   <KindIcon kind={dayVisual.kind} className="text-sky-700 dark:text-zinc-200" />
 
                   <div className="min-w-0">
-                    <div className="truncate text-sm text-slate-800 dark:text-zinc-200">{formatDayLong(day.dateISO)}</div>
+                    <div className="break-words text-sm text-slate-800 dark:text-zinc-200">{formatDayLong(day.dateISO)}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
                       <span>
                         {formatTempC(day.tempMinC)} <span className="text-slate-400 dark:text-zinc-600">→</span>{" "}
@@ -133,13 +133,13 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="col-start-3 row-start-2 flex items-center justify-between gap-2 sm:col-auto sm:row-auto sm:justify-end">
                     {activeView === "consensus" ? (
-                      <Badge tone="zinc" className="hidden sm:inline-flex">
+                      <Badge tone="zinc" className="inline-flex max-w-full shrink-0">
                         {day.reliability ?? "—"}
                       </Badge>
                     ) : day.uvMax !== undefined ? (
-                      <Badge tone={dayUv?.tone ?? "zinc"} className="hidden sm:inline-flex">
+                      <Badge tone={dayUv?.tone ?? "zinc"} className="inline-flex max-w-full shrink-0">
                         UV {formatUv(day.uvMax)} {dayUv?.label ? `· ${dayUv.label}` : ""}
                       </Badge>
                     ) : null}
