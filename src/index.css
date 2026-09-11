@@ -350,15 +350,97 @@
     font-feature-settings: "tnum" 1;
   }
 
+  /**
+   * Temperature : degrade anime qui circule sur les chiffres, avec une palette
+   * qui suit le thermometre (voir getTempBand). Les teintes sont declarees en
+   * variables pour que la bande n'ait qu'a les redefinir.
+   */
   .temp-gradient {
-    background-image: linear-gradient(135deg, #0f172a 0%, #0369a1 55%, #0ea5e9 100%);
+    --temp-a: #0f172a;
+    --temp-b: #0369a1;
+    --temp-c: #0ea5e9;
+    --temp-glow: 14 165 233;
+
+    background-image: linear-gradient(
+      110deg,
+      var(--temp-a) 0%,
+      var(--temp-b) 28%,
+      var(--temp-c) 46%,
+      var(--temp-b) 64%,
+      var(--temp-a) 100%
+    );
+    background-size: 280% auto;
+    background-position: 0% 50%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    animation: tempFlow 7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   }
 
   .dark .temp-gradient {
-    background-image: linear-gradient(135deg, #ffffff 0%, #bae6fd 55%, #7dd3fc 100%);
+    --temp-a: #ffffff;
+    --temp-b: #bae6fd;
+    --temp-c: #7dd3fc;
+    filter: drop-shadow(0 2px 16px rgb(var(--temp-glow) / 0.35));
+  }
+
+  /* Bandes de temperature — clair */
+  .temp-cold {
+    --temp-a: #0c4a6e;
+    --temp-b: #1d4ed8;
+    --temp-c: #38bdf8;
+    --temp-glow: 56 189 248;
+  }
+  .temp-cool {
+    --temp-a: #075985;
+    --temp-b: #0891b2;
+    --temp-c: #22d3ee;
+    --temp-glow: 34 211 238;
+  }
+  .temp-mild {
+    --temp-a: #0f172a;
+    --temp-b: #0369a1;
+    --temp-c: #0ea5e9;
+    --temp-glow: 14 165 233;
+  }
+  .temp-warm {
+    --temp-a: #7c2d12;
+    --temp-b: #ea580c;
+    --temp-c: #fbbf24;
+    --temp-glow: 251 146 60;
+  }
+  .temp-hot {
+    --temp-a: #7f1d1d;
+    --temp-b: #dc2626;
+    --temp-c: #fb923c;
+    --temp-glow: 248 113 113;
+  }
+
+  /* Bandes de temperature — sombre (pastels, lisibles sur fond tres fonce) */
+  .dark .temp-cold {
+    --temp-a: #f0f9ff;
+    --temp-b: #93c5fd;
+    --temp-c: #c4b5fd;
+  }
+  .dark .temp-cool {
+    --temp-a: #ecfeff;
+    --temp-b: #a5f3fc;
+    --temp-c: #7dd3fc;
+  }
+  .dark .temp-mild {
+    --temp-a: #ffffff;
+    --temp-b: #bae6fd;
+    --temp-c: #7dd3fc;
+  }
+  .dark .temp-warm {
+    --temp-a: #fffbeb;
+    --temp-b: #fcd34d;
+    --temp-c: #fdba74;
+  }
+  .dark .temp-hot {
+    --temp-a: #fff1f2;
+    --temp-b: #fca5a5;
+    --temp-c: #fdba74;
   }
 
   /* Field ---------------------------------------------------------- */
@@ -471,6 +553,18 @@
 }
 
 /* Entrance motion --------------------------------------------------- */
+
+@keyframes tempFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 
 @keyframes riseIn {
   from {

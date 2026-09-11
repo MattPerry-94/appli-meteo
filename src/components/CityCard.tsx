@@ -4,7 +4,19 @@ import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import type { CityForecastBundle } from "@/services/openMeteo";
 import { formatTempC, formatUv } from "@/utils/format";
-import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
+import { getOpenMeteoVisual, getTempBand, getUvLevel, type TempBand } from "@/utils/weather";
+
+/**
+ * Table explicite plutot que `temp-${band}` : Tailwind purge les classes de
+ * @layer components qu'il ne voit pas litteralement dans les sources.
+ */
+const tempBandClass: Record<TempBand, string> = {
+  cold: "temp-cold",
+  cool: "temp-cool",
+  mild: "temp-mild",
+  warm: "temp-warm",
+  hot: "temp-hot",
+};
 
 function KindIcon(props: { kind: ReturnType<typeof getOpenMeteoVisual>["kind"] }) {
   const className = "size-4";
@@ -27,6 +39,7 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
 
   const visual = getOpenMeteoVisual(current?.weatherCode ?? today?.weatherCode);
   const uv = getUvLevel(today?.uvMax);
+  const tempBand = getTempBand(current?.tempC);
 
   return (
     <Wrapper
@@ -56,7 +69,9 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
           </div>
 
           <div className="shrink-0 text-right">
-            <div className="display temp-gradient numeric text-5xl">{formatTempC(current?.tempC)}</div>
+            <div className={cn("display temp-gradient numeric text-5xl", tempBandClass[tempBand])}>
+              {formatTempC(current?.tempC)}
+            </div>
             <div className="numeric mt-1.5 text-xs text-slate-500 dark:text-zinc-400">
               <span className="font-semibold text-slate-700 dark:text-zinc-200">{formatTempC(today?.tempMinC)}</span>
               <span className="px-1 text-slate-300 dark:text-zinc-600">→</span>

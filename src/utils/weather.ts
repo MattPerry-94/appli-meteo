@@ -41,3 +41,19 @@ export function getUvLevel(value: number | undefined) {
   return { label: "Extrême", tone: "red" as const };
 }
 
+
+export type TempBand = "cold" | "cool" | "mild" | "warm" | "hot";
+
+/**
+ * Palette du thermomètre : pilote le dégradé animé de la température affichée.
+ * Une valeur absente retombe sur "mild", la teinte neutre.
+ */
+export function getTempBand(value: number | undefined): TempBand {
+  const temp = typeof value === "number" ? value : NaN;
+  if (!Number.isFinite(temp)) return "mild";
+  if (temp < 5) return "cold";
+  if (temp < 15) return "cool";
+  if (temp < 23) return "mild";
+  if (temp < 30) return "warm";
+  return "hot";
+}
