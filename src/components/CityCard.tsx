@@ -17,6 +17,10 @@ function KindIcon(props: { kind: ReturnType<typeof getOpenMeteoVisual>["kind"] }
 }
 
 export function CityCard(props: { bundle: CityForecastBundle | null; selected?: boolean; onSelect?: () => void }) {
+  // Sans onSelect la carte n'est pas interactive : la rendre en <button>
+  // donnerait un element focusable au clavier qui ne fait rien.
+  const isInteractive = typeof props.onSelect === "function";
+  const Wrapper = isInteractive ? "button" : "div";
   const city = props.bundle?.city;
   const today = props.bundle?.daily?.[0];
   const current = props.bundle?.current;
@@ -25,10 +29,14 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
   const uv = getUvLevel(today?.uvMax);
 
   return (
-    <button type="button" onClick={props.onSelect} className="block w-full text-left">
+    <Wrapper
+      {...(isInteractive ? { type: "button" as const, onClick: props.onSelect, "aria-pressed": Boolean(props.selected) } : {})}
+      className="block w-full text-left"
+    >
       <Card
         className={cn(
-          "surface-hover h-full overflow-hidden p-5",
+          "h-full overflow-hidden p-5",
+          isInteractive && "surface-hover",
           props.selected && "border-sky-500/40 bg-sky-500/[0.08] dark:border-sky-300/30 dark:bg-sky-400/10",
         )}
       >
@@ -64,6 +72,6 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
           <Badge tone="sky">7 jours</Badge>
         </div>
       </Card>
-    </button>
+    </Wrapper>
   );
 }

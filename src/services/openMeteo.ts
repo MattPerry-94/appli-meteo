@@ -15,7 +15,8 @@ export type OpenMeteoGeocodingResult = {
 };
 
 export type CurrentWeather = {
-  tempC: number;
+  /** Optionnel : une valeur absente doit rester absente, pas retomber sur 0 °C. */
+  tempC?: number;
   windKph?: number;
   humidityPct?: number;
   weatherCode?: number;
@@ -56,6 +57,9 @@ export type CityForecastBundle = {
   timezone: string;
   updatedAtISO: string;
   note?: string;
+  /** true quand le modele n'a pas repondu : a distinguer d'un modele sans donnees. */
+  unavailable?: boolean;
+  unavailableReason?: string;
   current?: CurrentWeather;
   daily: DailyForecast[];
   hourly: HourlyForecastPoint[];
@@ -127,7 +131,9 @@ function buildUrl(city: FavoriteCity, modelId: ForecastSourceId, includeUv: bool
   url.searchParams.set("longitude", String(city.lon));
   url.searchParams.set("models", config.modelParam);
   url.searchParams.set("forecast_days", String(config.forecastDays));
-  url.searchParams.set("timezone", "Europe/Paris");
+  // "auto" : Open-Meteo aligne les heures sur le fuseau de la ville demandee.
+  // Un "Europe/Paris" fige decalait toutes les previsions hors de France.
+  url.searchParams.set("timezone", "auto");
 
   const hourly = [
     "temperature_2m",
@@ -217,7 +223,7 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
 
   const current = currentObj
     ? {
-        tempC: typeof currentObj.temperature_2m === "number" ? currentObj.temperature_2m : 0,
+        tempC: typeof currentObj.temperature_2m === "number" ? currentObj.temperature_2m : undefined,
         windKph: typeof currentObj.wind_speed_10m === "number" ? currentObj.wind_speed_10m : undefined,
         humidityPct: typeof currentObj.relative_humidity_2m === "number" ? currentObj.relative_humidity_2m : undefined,
         weatherCode: typeof currentObj.weather_code === "number" ? currentObj.weather_code : undefined,
@@ -238,7 +244,7 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
   };
 }
 
-function emptyBundle(city: FavoriteCity, modelId: ForecastSourceId): CityForecastBundle {
+function unavailableBundle(city: FavoriteCity, modelId: ForecastSourceId, reason: string): CityForecastBundle {
   return {
     city,
     modelId,
@@ -246,6 +252,8 @@ function emptyBundle(city: FavoriteCity, modelId: ForecastSourceId): CityForecas
     timezone: "Europe/Paris",
     updatedAtISO: new Date().toISOString(),
     note: MODEL_CONFIG[modelId].note,
+    unavailable: true,
+    unavailableReason: reason,
     daily: [],
     hourly: [],
   };
@@ -255,15 +263,26 @@ async function fetchModelForecastBundle(city: FavoriteCity, modelId: ForecastSou
   const { signal, cancel } = withTimeout(options?.signal, 18000);
   try {
     const urls = [buildUrl(city, modelId, true), buildUrl(city, modelId, false)];
+    let lastFailure = "aucune réponse exploitable";
 
     for (const url of urls) {
-      const res = await fetch(url, { signal });
-      if (!res.ok) continue;
-      const data = (await res.json()) as Record<string, unknown>;
-      return parseBundle(city, modelId, data);
+      try {
+        const res = await fetch(url, { signal });
+        if (!res.ok) {
+          lastFailure = `réponse HTTP ${res.status}`;
+          continue;
+        }
+        const data = (await res.json()) as Record<string, unknown>;
+        return parseBundle(city, modelId, data);
+      } catch (error) {
+        // Une annulation demandée par l'appelant doit remonter ; une panne
+        // réseau ou un timeout ne doit pas faire tomber les deux autres modèles.
+        if (options?.signal?.aborted) throw error;
+        lastFailure = error instanceof Error ? error.message : "erreur réseau";
+      }
     }
 
-    return emptyBundle(city, modelId);
+    return unavailableBundle(city, modelId, lastFailure);
   } finally {
     cancel();
   }
@@ -285,7 +304,7 @@ function buildConsensusCurrent(city: FavoriteCity, models: Record<ForecastSource
   if (!entries.length) return undefined;
 
   return {
-    tempC: averageDefined(entries.map((entry) => entry.current?.tempC)) ?? 0,
+    tempC: averageDefined(entries.map((entry) => entry.current?.tempC)),
     windKph: averageDefined(entries.map((entry) => entry.current?.windKph)),
     humidityPct: averageDefined(entries.map((entry) => entry.current?.humidityPct)),
     weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.current?.weatherCode)),
@@ -497,6 +516,11 @@ export async function fetchForecastModelSet(city: FavoriteCity, options?: { sign
     gfs,
     ecmwf,
   };
+
+  const failed = Object.values(models).filter((bundle) => bundle.unavailable);
+  if (failed.length === Object.keys(models).length) {
+    throw new Error(`Aucun modèle de prévision n'a répondu (${failed[0].unavailableReason}).`);
+  }
 
   const consensus = buildConsensusBundle(city, models);
 

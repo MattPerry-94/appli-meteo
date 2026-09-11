@@ -6,6 +6,8 @@ import { CityCard } from "@/components/CityCard";
 import { Forecast7Days } from "@/components/Forecast7Days";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
+import { cn } from "@/lib/utils";
+import { formatTimeHHmm } from "@/utils/format";
 import { reverseGeocodeCity, searchCities, type OpenMeteoGeocodingResult } from "@/services/openMeteo";
 import { fetchMeteoFranceDepartmentBulletin, type MeteoFranceDepartmentBulletin } from "@/services/meteoFranceVigilance";
 
@@ -80,7 +82,7 @@ export default function Home() {
   const markBrowserLocationAttempted = useAppStore((s) => s.markBrowserLocationAttempted);
 
   const cities = useMemo(() => [activeCity], [activeCity]);
-  const { bundles, isLoading, error } = useForecastBundles(cities);
+  const { bundles, isLoading, error, updatedAt } = useForecastBundles(cities);
   const forecastSet = bundles[activeCity.id] ?? null;
 
   const [query, setQuery] = useState("");
@@ -269,6 +271,13 @@ export default function Home() {
             <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
               <span className="size-1.5 animate-pulse rounded-full bg-sky-500" />
               Recherche de la ville du navigateur…
+            </div>
+          ) : null}
+
+          {updatedAt ? (
+            <div className="numeric mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
+              <span className={cn("size-1.5 rounded-full bg-emerald-500", isLoading && "animate-pulse bg-sky-500")} />
+              {isLoading ? "Actualisation…" : `Mis à jour à ${formatTimeHHmm(updatedAt)}`}
             </div>
           ) : null}
 

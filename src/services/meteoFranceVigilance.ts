@@ -153,7 +153,9 @@ const FRENCH_DEPARTMENT_NAMES: Record<string, string> = {
   "976": "Mayotte",
 };
 
-const DEFAULT_BASE_URL = "https://public-api.meteofrance.fr/public/DPVigilance/v1";
+// Le navigateur n'appelle jamais Meteo-France directement : la cle vit cote
+// serveur, derriere ce proxy (vite.config.ts en dev, api/meteofrance/ en prod).
+const PROXY_BASE_URL = "/api/meteofrance";
 const DEFAULT_SOURCE_URL = "https://vigilance.meteofrance.fr/fr";
 
 export const VIGILANCE_RISK_LABELS: Record<VigilanceRiskId, string> = {
@@ -221,11 +223,21 @@ function withTimeout(timeoutMs: number, signal?: AbortSignal) {
 }
 
 function getConfiguredBaseUrl() {
-  return (import.meta.env.VITE_METEOFRANCE_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+  return PROXY_BASE_URL;
 }
 
-function getConfiguredCredential() {
-  return (import.meta.env.VITE_METEOFRANCE_API_KEY ?? "").trim();
+/**
+ * Le proxy renvoie ses erreurs en JSON ({ error }). On les remonte telles
+ * quelles pour distinguer une cle mal configuree d'une panne Meteo-France.
+ */
+async function describeFailure(response: Response, fallback: string) {
+  try {
+    const body = (await response.clone().json()) as { error?: unknown };
+    if (typeof body.error === "string" && body.error.trim()) return body.error.trim();
+  } catch {
+    // Reponse non JSON (page d'erreur HTML, PDF tronque...) : on garde le fallback.
+  }
+  return `${fallback} (${response.status}).`;
 }
 
 function normalizeFreeText(value: string) {
@@ -314,11 +326,6 @@ export async function fetchMeteoFranceDepartmentBulletin(
   departmentCode: string,
   options?: { signal?: AbortSignal },
 ): Promise<MeteoFranceDepartmentBulletin | null> {
-  const credential = getConfiguredCredential();
-  if (!credential) {
-    throw new Error("Clé Météo-France absente. Renseigne VITE_METEOFRANCE_API_KEY dans le fichier .env.");
-  }
-
   const normalizedDepartmentCode = departmentCode.trim().toUpperCase();
   if (!normalizedDepartmentCode) return null;
 
@@ -329,13 +336,12 @@ export async function fetchMeteoFranceDepartmentBulletin(
       signal,
       cache: "no-store",
       headers: {
-        ApiKey: credential,
         Accept: "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Récupération des textes de vigilance impossible (${response.status}).`);
+      throw new Error(await describeFailure(response, "Récupération des textes de vigilance impossible"));
     }
 
     const data = (await response.json()) as Record<string, unknown>;
@@ -427,11 +433,6 @@ export async function fetchMeteoFranceDepartmentBulletin(
 }
 
 export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal }): Promise<VigilanceSnapshot> {
-  const credential = getConfiguredCredential();
-  if (!credential) {
-    throw new Error("Clé Météo-France absente. Renseigne VITE_METEOFRANCE_API_KEY dans le fichier .env.");
-  }
-
   const { signal, cancel } = withTimeout(16000, options?.signal);
 
   try {
@@ -439,13 +440,12 @@ export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal
       signal,
       cache: "no-store",
       headers: {
-        ApiKey: credential,
         Accept: "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Récupération des vigilances impossible (${response.status}).`);
+      throw new Error(await describeFailure(response, "Récupération des vigilances impossible"));
     }
 
     const data = (await response.json()) as Record<string, unknown>;
@@ -462,11 +462,6 @@ export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal
 }
 
 export async function fetchMeteoFranceNationalCardDocument(options?: { signal?: AbortSignal }): Promise<VigilanceNationalCardDocument> {
-  const credential = getConfiguredCredential();
-  if (!credential) {
-    throw new Error("Clé Météo-France absente. Renseigne VITE_METEOFRANCE_API_KEY dans le fichier .env.");
-  }
-
   const { signal, cancel } = withTimeout(20000, options?.signal);
 
   try {
@@ -474,13 +469,12 @@ export async function fetchMeteoFranceNationalCardDocument(options?: { signal?: 
       signal,
       cache: "no-store",
       headers: {
-        ApiKey: credential,
         Accept: "*/*",
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Récupération de la carte nationale impossible (${response.status}).`);
+      throw new Error(await describeFailure(response, "Récupération de la carte nationale impossible"));
     }
 
     const blob = await response.blob();

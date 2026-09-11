@@ -37,3 +37,7 @@ export function formatTimeHHmmFromISODateTime(iso: string) {
   const d = new Date(iso);
   return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(d);
 }
+
+export function formatTimeHHmm(date: Date) {
+  return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(date);
+}

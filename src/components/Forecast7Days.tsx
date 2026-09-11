@@ -68,11 +68,13 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
             </div>
           </div>
 
-          <div className="segment-group grid w-full grid-cols-2 sm:flex">
+          <div role="tablist" aria-label="Modèle de prévision" className="segment-group grid w-full grid-cols-2 sm:flex">
             {views.map((view) => (
               <button
                 key={view}
                 type="button"
+                role="tab"
+                aria-selected={activeView === view}
                 onClick={() => setActiveView(view)}
                 className={cn("segment flex-1 px-2.5 sm:px-3.5", activeView === view && "segment-active")}
               >
@@ -95,6 +97,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                 <button
                   key={`${day.dateISO}-${idx}`}
                   type="button"
+                  aria-expanded={isOpen}
                   onClick={() => setOpenIndex(idx)}
                   className={cn(
                     "relative grid w-full grid-cols-[64px_28px_minmax(0,1fr)] items-center gap-3 px-4 py-3.5 text-left transition-colors sm:grid-cols-[64px_28px_1fr_auto]",
@@ -156,7 +159,9 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
           </div>
         ) : (
           <div className="tile mt-5 rounded-2xl p-4 text-sm text-slate-500 dark:text-zinc-400">
-            Aucune donnée disponible pour ce modèle sur la période affichée.
+            {activeBundle?.unavailable
+              ? `Ce modèle n'a pas répondu (${activeBundle.unavailableReason}). Les autres modèles restent disponibles.`
+              : "Aucune donnée disponible pour ce modèle sur la période affichée."}
           </div>
         )}
       </Card>

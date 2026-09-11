@@ -235,9 +235,11 @@ export default function MapPage() {
             </div>
           </div>
 
-          <div className="segment-group shrink-0">
+          <div role="tablist" aria-label="Vue de la carte" className="segment-group shrink-0">
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "radar"}
               onClick={() => setActiveTab("radar")}
               className={cn("segment", activeTab === "radar" && "segment-active")}
             >
@@ -247,6 +249,8 @@ export default function MapPage() {
 
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "vigilances"}
               onClick={() => setActiveTab("vigilances")}
               className={cn("segment", activeTab === "vigilances" && "segment-active")}
             >
@@ -271,7 +275,7 @@ export default function MapPage() {
                 </Badge>
               </div>
 
-              <div className="segment-group mt-4 grid w-full grid-cols-3">
+              <div role="tablist" aria-label="Couche affichée" className="segment-group mt-4 grid w-full grid-cols-3">
                 {[
                   { id: "rain" as const, label: "Pluie", icon: CloudRain },
                   { id: "clouds" as const, label: "Nuages", icon: Cloud },
@@ -282,6 +286,8 @@ export default function MapPage() {
                     <button
                       key={layer.id}
                       type="button"
+                      role="tab"
+                      aria-selected={radarLayer === layer.id}
                       onClick={() => setRadarLayer(layer.id)}
                       className={cn("segment px-2 sm:px-3.5", radarLayer === layer.id && "segment-active")}
                     >
