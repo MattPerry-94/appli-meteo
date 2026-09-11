@@ -103,7 +103,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     "relative grid w-full grid-cols-[64px_28px_minmax(0,1fr)] items-center gap-3 px-4 py-3.5 text-left transition-colors sm:grid-cols-[64px_28px_1fr_auto]",
                     idx > 0 && "border-t border-slate-900/[0.06] dark:border-white/[0.07]",
                     "hover:bg-slate-900/[0.035] dark:hover:bg-white/[0.05]",
-                    isOpen && "accent-wash hover:bg-[rgb(var(--accent)/0.1)]",
+                    isOpen && "accent-wash",
                   )}
                 >
                   {isOpen ? (
