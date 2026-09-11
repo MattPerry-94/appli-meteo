@@ -4,19 +4,7 @@ import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import type { CityForecastBundle } from "@/services/openMeteo";
 import { formatTempC, formatUv } from "@/utils/format";
-import { getOpenMeteoVisual, getTempBand, getUvLevel, type TempBand } from "@/utils/weather";
-
-/**
- * Table explicite plutot que `temp-${band}` : Tailwind purge les classes de
- * @layer components qu'il ne voit pas litteralement dans les sources.
- */
-const tempBandClass: Record<TempBand, string> = {
-  cold: "temp-cold",
-  cool: "temp-cool",
-  mild: "temp-mild",
-  warm: "temp-warm",
-  hot: "temp-hot",
-};
+import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
 
 function KindIcon(props: { kind: ReturnType<typeof getOpenMeteoVisual>["kind"] }) {
   const className = "size-4";
@@ -39,7 +27,6 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
 
   const visual = getOpenMeteoVisual(current?.weatherCode ?? today?.weatherCode);
   const uv = getUvLevel(today?.uvMax);
-  const tempBand = getTempBand(current?.tempC);
 
   return (
     <Wrapper
@@ -50,14 +37,14 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
         className={cn(
           "h-full overflow-hidden p-5",
           isInteractive && "surface-hover",
-          props.selected && "border-sky-500/40 bg-sky-500/[0.08] dark:border-sky-300/30 dark:bg-sky-400/10",
+          props.selected && "accent-edge accent-wash",
         )}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="break-words text-base font-semibold text-slate-900 dark:text-white">{city?.name ?? "—"}</div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
-              <span className="inline-flex items-center gap-1.5 font-medium text-sky-700 dark:text-sky-200">
+              <span className="accent-ink inline-flex items-center gap-1.5 font-medium">
                 <KindIcon kind={visual.kind} />
                 <span className="truncate">{visual.label}</span>
               </span>
@@ -69,7 +56,7 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
           </div>
 
           <div className="shrink-0 text-right">
-            <div className={cn("display temp-gradient numeric text-5xl", tempBandClass[tempBand])}>
+            <div className="display temp-gradient numeric text-5xl">
               {formatTempC(current?.tempC)}
             </div>
             <div className="numeric mt-1.5 text-xs text-slate-500 dark:text-zinc-400">

@@ -17,11 +17,11 @@ export default function AppShell() {
   const { isDark, toggleTheme } = useTheme();
 
   return (
-    <div className="grainient-surface min-h-dvh text-slate-900 dark:text-zinc-50">
+    <div className="grainient-surface ambience-fade min-h-dvh text-slate-900 dark:text-zinc-50">
       <div className="relative mx-auto flex w-full max-w-6xl flex-col px-4 pb-16 pt-5 md:px-6">
         <header className="sticky top-3 z-30 flex items-center justify-between gap-3 rounded-3xl border border-slate-900/[0.07] bg-white/70 px-3 py-2.5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:px-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 via-sky-500 to-indigo-500 shadow-glow">
+            <div className="accent-surface accent-glow relative grid size-11 shrink-0 place-items-center rounded-2xl">
               <Sun className="size-5 text-white drop-shadow-sm" />
             </div>
             <div className="min-w-0 leading-tight">
@@ -42,7 +42,7 @@ export default function AppShell() {
               aria-label={isDark ? "Passer en thème clair" : "Passer en thème sombre"}
               className="btn btn-ghost rounded-2xl"
             >
-              {isDark ? <Moon className="size-4 text-sky-200" /> : <SunMedium className="size-4 text-amber-500" />}
+              {isDark ? <Moon className="accent-ink size-4" /> : <SunMedium className="size-4 text-amber-500" />}
               <span className="hidden md:inline">{isDark ? "Sombre" : "Clair"}</span>
             </button>
           </div>

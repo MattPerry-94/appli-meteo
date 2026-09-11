@@ -24,10 +24,13 @@
     --hairline-alpha: 0.08;
     --hairline-strong-alpha: 0.14;
 
-    /* Accents */
+    /* Accents — valeurs par defaut, surchargees par [data-ambience] plus bas */
     --accent: 14 165 233;
     --accent-2: 99 102 241;
-    --accent-warm: 245 158 11;
+    --accent-ink: 2 132 199;
+    --accent-deep: 12 74 110;
+    /* Ancre sombre du degrade de temperature (passe au blanc en theme sombre) */
+    --temp-anchor: var(--accent-deep);
 
     /* Elevation */
     --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.16);
@@ -55,7 +58,9 @@
 
     --accent: 56 189 248;
     --accent-2: 129 140 248;
-    --accent-warm: 251 191 36;
+    --accent-ink: 125 211 252;
+    --accent-deep: 224 242 254;
+    --temp-anchor: 255 255 255;
 
     --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-card: 0 1px 1px rgb(0 0 0 / 0.3), 0 18px 40px -22px rgb(0 0 0 / 0.75);
@@ -136,6 +141,75 @@
     background-color: rgb(255 255 255 / 0.28);
     background-clip: content-box;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Ambiances : la palette d'accent suit la temperature de la ville     */
+/* active (voir useAmbience / getTempBand).                            */
+/* ------------------------------------------------------------------ */
+
+/* < 16 C : bleus et blancs */
+:root[data-ambience="cool"] {
+  --accent: 14 165 233;
+  --accent-2: 99 102 241;
+  --accent-ink: 2 132 199;
+  --accent-deep: 12 74 110;
+  --ring-focus: 14 165 233;
+}
+
+/* 16-25 C : orange et jaune */
+:root[data-ambience="warm"] {
+  --accent: 245 158 11;
+  --accent-2: 249 115 22;
+  --accent-ink: 180 83 9;
+  --accent-deep: 120 53 15;
+  --ring-focus: 245 158 11;
+}
+
+/* > 25 C : rouges */
+:root[data-ambience="hot"] {
+  --accent: 239 68 68;
+  --accent-2: 249 115 22;
+  --accent-ink: 185 28 28;
+  --accent-deep: 127 29 29;
+  --ring-focus: 239 68 68;
+}
+
+/* Variantes sombres : accents plus clairs pour rester lisibles */
+.dark[data-ambience="cool"] {
+  --accent: 56 189 248;
+  --accent-2: 129 140 248;
+  --accent-ink: 125 211 252;
+  --accent-deep: 224 242 254;
+  --ring-focus: 56 189 248;
+}
+
+.dark[data-ambience="warm"] {
+  --accent: 251 191 36;
+  --accent-2: 251 146 60;
+  --accent-ink: 252 211 77;
+  --accent-deep: 254 243 199;
+  --ring-focus: 251 191 36;
+}
+
+.dark[data-ambience="hot"] {
+  --accent: 248 113 113;
+  --accent-2: 251 146 60;
+  --accent-ink: 252 165 165;
+  --accent-deep: 254 226 226;
+  --ring-focus: 248 113 113;
+}
+
+/* Le basculement d'une ambiance a l'autre se fait en douceur. */
+.ambience-fade,
+.ambience-fade::before,
+.ambience-fade::after {
+  transition:
+    background-color 900ms ease,
+    background-image 900ms ease,
+    color 900ms ease,
+    border-color 900ms ease,
+    filter 900ms ease;
 }
 
 /* ------------------------------------------------------------------ */
@@ -313,7 +387,7 @@
 
   .segment-active,
   .segment-active:hover {
-    color: rgb(12 74 110);
+    color: rgb(var(--accent-deep));
     background-color: rgb(255 255 255 / 0.96);
     box-shadow:
       0 1px 1px rgb(15 23 42 / 0.06),
@@ -351,23 +425,18 @@
   }
 
   /**
-   * Temperature : degrade anime qui circule sur les chiffres, avec une palette
-   * qui suit le thermometre (voir getTempBand). Les teintes sont declarees en
-   * variables pour que la bande n'ait qu'a les redefinir.
+   * Temperature : degrade anime qui circule sur les chiffres. Ses teintes
+   * derivent des tokens d'ambiance, donc le chiffre suit automatiquement la
+   * bande de temperature sans classe supplementaire.
    */
   .temp-gradient {
-    --temp-a: #0f172a;
-    --temp-b: #0369a1;
-    --temp-c: #0ea5e9;
-    --temp-glow: 14 165 233;
-
     background-image: linear-gradient(
       110deg,
-      var(--temp-a) 0%,
-      var(--temp-b) 28%,
-      var(--temp-c) 46%,
-      var(--temp-b) 64%,
-      var(--temp-a) 100%
+      rgb(var(--temp-anchor)) 0%,
+      rgb(var(--accent-ink)) 28%,
+      rgb(var(--accent)) 46%,
+      rgb(var(--accent-ink)) 64%,
+      rgb(var(--temp-anchor)) 100%
     );
     background-size: 280% auto;
     background-position: 0% 50%;
@@ -378,69 +447,41 @@
   }
 
   .dark .temp-gradient {
-    --temp-a: #ffffff;
-    --temp-b: #bae6fd;
-    --temp-c: #7dd3fc;
-    filter: drop-shadow(0 2px 16px rgb(var(--temp-glow) / 0.35));
+    filter: drop-shadow(0 2px 16px rgb(var(--accent) / 0.35));
   }
 
-  /* Bandes de temperature — clair */
-  .temp-cold {
-    --temp-a: #0c4a6e;
-    --temp-b: #1d4ed8;
-    --temp-c: #38bdf8;
-    --temp-glow: 56 189 248;
-  }
-  .temp-cool {
-    --temp-a: #075985;
-    --temp-b: #0891b2;
-    --temp-c: #22d3ee;
-    --temp-glow: 34 211 238;
-  }
-  .temp-mild {
-    --temp-a: #0f172a;
-    --temp-b: #0369a1;
-    --temp-c: #0ea5e9;
-    --temp-glow: 14 165 233;
-  }
-  .temp-warm {
-    --temp-a: #7c2d12;
-    --temp-b: #ea580c;
-    --temp-c: #fbbf24;
-    --temp-glow: 251 146 60;
-  }
-  .temp-hot {
-    --temp-a: #7f1d1d;
-    --temp-b: #dc2626;
-    --temp-c: #fb923c;
-    --temp-glow: 248 113 113;
+  /* Utilitaires d'accent : tout ce qui doit suivre l'ambiance ------- */
+
+  /** Texte d'accent, lisible sur le fond du theme courant. */
+  .accent-ink {
+    color: rgb(var(--accent-ink));
   }
 
-  /* Bandes de temperature — sombre (pastels, lisibles sur fond tres fonce) */
-  .dark .temp-cold {
-    --temp-a: #f0f9ff;
-    --temp-b: #93c5fd;
-    --temp-c: #c4b5fd;
+  /** Aplat tres leger, pour les lignes et cartes selectionnees. */
+  .accent-wash {
+    background-color: rgb(var(--accent) / 0.1);
   }
-  .dark .temp-cool {
-    --temp-a: #ecfeff;
-    --temp-b: #a5f3fc;
-    --temp-c: #7dd3fc;
+
+  .accent-edge {
+    border-color: rgb(var(--accent) / 0.4);
   }
-  .dark .temp-mild {
-    --temp-a: #ffffff;
-    --temp-b: #bae6fd;
-    --temp-c: #7dd3fc;
+
+  /** Pastille pleine (indicateurs de chargement, puces). */
+  .accent-dot {
+    background-color: rgb(var(--accent));
   }
-  .dark .temp-warm {
-    --temp-a: #fffbeb;
-    --temp-b: #fcd34d;
-    --temp-c: #fdba74;
+
+  /** Degrade d'accent : logo, barre du jour actif. */
+  .accent-bar {
+    background-image: linear-gradient(180deg, rgb(var(--accent)), rgb(var(--accent-2)));
   }
-  .dark .temp-hot {
-    --temp-a: #fff1f2;
-    --temp-b: #fca5a5;
-    --temp-c: #fdba74;
+
+  .accent-surface {
+    background-image: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-2)));
+  }
+
+  .accent-glow {
+    box-shadow: 0 10px 30px -10px rgb(var(--accent) / 0.55);
   }
 
   /* Field ---------------------------------------------------------- */
@@ -491,7 +532,7 @@
 .dark .grainient-surface {
   background-color: #070a12;
   background-image:
-    radial-gradient(120% 85% at 50% -20%, rgb(56 189 248 / 0.1), transparent 60%),
+    radial-gradient(120% 85% at 50% -20%, rgb(var(--accent) / 0.1), transparent 60%),
     linear-gradient(180deg, #080c15 0%, #070a11 52%, #0c0a10 100%);
 }
 
@@ -503,10 +544,10 @@
   z-index: -2;
   pointer-events: none;
   background-image:
-    radial-gradient(30% 30% at 18% 20%, rgb(56 189 248 / 0.5), transparent 62%),
-    radial-gradient(26% 26% at 78% 14%, rgb(129 140 248 / 0.38), transparent 62%),
-    radial-gradient(32% 32% at 66% 78%, rgb(251 191 36 / 0.3), transparent 60%),
-    radial-gradient(28% 28% at 24% 82%, rgb(45 212 191 / 0.26), transparent 62%);
+    radial-gradient(30% 30% at 18% 20%, rgb(var(--accent) / 0.5), transparent 62%),
+    radial-gradient(26% 26% at 78% 14%, rgb(var(--accent-2) / 0.38), transparent 62%),
+    radial-gradient(32% 32% at 66% 78%, rgb(var(--accent) / 0.28), transparent 60%),
+    radial-gradient(28% 28% at 24% 82%, rgb(var(--accent-2) / 0.24), transparent 62%);
   filter: blur(64px) saturate(1.25);
   opacity: 0.95;
   will-change: transform;
@@ -515,10 +556,10 @@
 
 .dark .grainient-surface::before {
   background-image:
-    radial-gradient(30% 30% at 18% 20%, rgb(14 165 233 / 0.4), transparent 62%),
-    radial-gradient(26% 26% at 78% 14%, rgb(99 102 241 / 0.34), transparent 62%),
-    radial-gradient(32% 32% at 66% 78%, rgb(245 158 11 / 0.18), transparent 60%),
-    radial-gradient(28% 28% at 24% 82%, rgb(20 184 166 / 0.16), transparent 62%);
+    radial-gradient(30% 30% at 18% 20%, rgb(var(--accent) / 0.34), transparent 62%),
+    radial-gradient(26% 26% at 78% 14%, rgb(var(--accent-2) / 0.3), transparent 62%),
+    radial-gradient(32% 32% at 66% 78%, rgb(var(--accent) / 0.18), transparent 60%),
+    radial-gradient(28% 28% at 24% 82%, rgb(var(--accent-2) / 0.16), transparent 62%);
   filter: blur(80px) saturate(1.1);
   opacity: 0.8;
 }
@@ -714,9 +755,9 @@
   margin-top: -6px;
   border: 2px solid rgb(255 255 255 / 0.95);
   border-radius: 9999px;
-  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+  background: linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--accent-2)) 100%);
   box-shadow:
-    0 8px 18px -6px rgb(14 165 233 / 0.7),
+    0 8px 18px -6px rgb(var(--accent) / 0.7),
     0 2px 4px rgb(15 23 42 / 0.18);
   cursor: pointer;
   transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1);
@@ -738,9 +779,9 @@
   height: 22px;
   border: 2px solid rgb(255 255 255 / 0.95);
   border-radius: 9999px;
-  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+  background: linear-gradient(135deg, rgb(var(--accent)) 0%, rgb(var(--accent-2)) 100%);
   box-shadow:
-    0 8px 18px -6px rgb(14 165 233 / 0.7),
+    0 8px 18px -6px rgb(var(--accent) / 0.7),
     0 2px 4px rgb(15 23 42 / 0.18);
   cursor: pointer;
 }

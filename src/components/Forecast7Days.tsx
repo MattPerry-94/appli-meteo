@@ -103,16 +103,16 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     "relative grid w-full grid-cols-[64px_28px_minmax(0,1fr)] items-center gap-3 px-4 py-3.5 text-left transition-colors sm:grid-cols-[64px_28px_1fr_auto]",
                     idx > 0 && "border-t border-slate-900/[0.06] dark:border-white/[0.07]",
                     "hover:bg-slate-900/[0.035] dark:hover:bg-white/[0.05]",
-                    isOpen && "bg-sky-500/[0.09] hover:bg-sky-500/[0.09] dark:bg-sky-400/10 dark:hover:bg-sky-400/10",
+                    isOpen && "accent-wash hover:bg-[rgb(var(--accent)/0.1)]",
                   )}
                 >
                   {isOpen ? (
-                    <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-sky-400 to-indigo-500" />
+                    <span className="accent-bar absolute inset-y-1.5 left-0 w-1 rounded-full" />
                   ) : null}
 
                   <div className="eyebrow">{formatDayShort(day.dateISO)}</div>
 
-                  <KindIcon kind={dayVisual.kind} className="text-sky-600 dark:text-sky-300" />
+                  <KindIcon kind={dayVisual.kind} className="accent-ink" />
 
                   <div className="min-w-0">
                     <div className="break-words text-sm font-semibold text-slate-800 dark:text-zinc-100">
@@ -149,7 +149,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     <ChevronDown
                       className={cn(
                         "size-4 shrink-0 text-slate-400 transition-transform duration-300 ease-spring dark:text-zinc-500",
-                        isOpen && "rotate-180 text-sky-600 dark:text-sky-300",
+                        isOpen && "accent-ink rotate-180",
                       )}
                     />
                   </div>
@@ -237,7 +237,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
           <div className="tile rounded-2xl p-3.5">
             <div className="eyebrow">Résumé</div>
             <div className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-zinc-50">
-              <KindIcon kind={visual.kind} className="text-sky-600 dark:text-sky-300" />
+              <KindIcon kind={visual.kind} className="accent-ink" />
               <span>{visual.label}</span>
             </div>
           </div>
@@ -254,7 +254,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                       className="tile tile-interactive grid grid-cols-[80px_22px_1fr] items-center gap-3 rounded-xl px-3 py-2.5"
                     >
                       <div className="text-xs font-bold text-slate-700 dark:text-zinc-200">{item.label}</div>
-                      <KindIcon kind={itemVisual.kind} className="text-sky-600 dark:text-sky-300" />
+                      <KindIcon kind={itemVisual.kind} className="accent-ink" />
                       <div className="numeric text-xs text-slate-500 dark:text-zinc-400">
                         {item.day ? (
                           <>

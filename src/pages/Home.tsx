@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, LocateFixed, Search, Snowflake, Sun } from "lucide-react";
 import { useAppStore, type FavoriteCity, type CitySource } from "@/stores/appStore";
 import { useForecastBundles } from "@/hooks/useForecastBundles";
+import { useAmbience } from "@/hooks/useAmbience";
 import { CityCard } from "@/components/CityCard";
 import { Forecast7Days } from "@/components/Forecast7Days";
 import { Card } from "@/components/Card";
@@ -94,6 +95,9 @@ export default function Home() {
   const [isLoadingBulletin, setIsLoadingBulletin] = useState(false);
 
   const currentTempC = forecastSet?.consensus?.current?.tempC;
+
+  // Diffuse la palette du site (bleu / orange / rouge) selon la temperature.
+  useAmbience(currentTempC);
 
   const preventionCard = useMemo(() => {
     const tempC = currentTempC;
@@ -269,14 +273,14 @@ export default function Home() {
 
           {isLocating ? (
             <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-              <span className="size-1.5 animate-pulse rounded-full bg-sky-500" />
+              <span className="accent-dot size-1.5 animate-pulse rounded-full" />
               Recherche de la ville du navigateur…
             </div>
           ) : null}
 
           {updatedAt ? (
             <div className="numeric mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-              <span className={cn("size-1.5 rounded-full bg-emerald-500", isLoading && "animate-pulse bg-sky-500")} />
+              <span className={cn("size-1.5 rounded-full bg-emerald-500", isLoading && "accent-dot animate-pulse")} />
               {isLoading ? "Actualisation…" : `Mis à jour à ${formatTimeHHmm(updatedAt)}`}
             </div>
           ) : null}
@@ -315,7 +319,7 @@ export default function Home() {
               <div className="display mt-1 text-2xl">Changer de ville</div>
             </div>
             <button type="button" onClick={locateFromBrowser} className="btn btn-ghost shrink-0 rounded-2xl">
-              <LocateFixed className="size-4 text-sky-600 dark:text-sky-300" />
+              <LocateFixed className="accent-ink size-4" />
               <span>Ma position</span>
             </button>
           </div>
@@ -328,7 +332,7 @@ export default function Home() {
               placeholder="Ex: Nice, Saint-Laurent-du-Var, Antibes…"
               className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
-            {isSearching ? <div className="size-2 shrink-0 animate-pulse rounded-full bg-sky-500" /> : null}
+            {isSearching ? <div className="accent-dot size-2 shrink-0 animate-pulse rounded-full" /> : null}
           </div>
 
           <div className="mt-3 space-y-2">
@@ -354,7 +358,7 @@ export default function Home() {
                     <div className="numeric">
                       {result.lat.toFixed(4).replace(".", ",")} ; {result.lon.toFixed(4).replace(".", ",")}
                     </div>
-                    <div className="mt-1 font-medium text-sky-600 dark:text-sky-300">Afficher cette ville</div>
+                    <div className="accent-ink mt-1 font-medium">Afficher cette ville</div>
                   </div>
                 </div>
               </button>

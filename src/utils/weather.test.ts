@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
+import { getOpenMeteoVisual, getTempBand, getUvLevel } from "@/utils/weather";
 
 describe("weather", () => {
   it("mappe quelques codes", () => {
@@ -18,3 +18,26 @@ describe("weather", () => {
   });
 });
 
+
+describe("getTempBand", () => {
+  it("bascule en bleu sous 16 °C", () => {
+    expect(getTempBand(-5)).toBe("cool");
+    expect(getTempBand(15.9)).toBe("cool");
+  });
+
+  it("passe en orangé entre 16 et 25 °C inclus", () => {
+    expect(getTempBand(16)).toBe("warm");
+    expect(getTempBand(24)).toBe("warm");
+    expect(getTempBand(25)).toBe("warm");
+  });
+
+  it("vire au rouge au-dessus de 25 °C", () => {
+    expect(getTempBand(25.1)).toBe("hot");
+    expect(getTempBand(38)).toBe("hot");
+  });
+
+  it("retombe sur le bleu quand la température est inconnue", () => {
+    expect(getTempBand(undefined)).toBe("cool");
+    expect(getTempBand(NaN)).toBe("cool");
+  });
+});

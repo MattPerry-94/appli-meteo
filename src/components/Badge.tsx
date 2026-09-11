@@ -5,7 +5,8 @@ type Tone = "zinc" | "sky" | "emerald" | "amber" | "orange" | "rose" | "red";
 
 const toneClass: Record<Tone, string> = {
   zinc: "bg-slate-900/[0.055] text-slate-700 ring-slate-900/10 dark:bg-white/10 dark:text-zinc-200 dark:ring-white/15",
-  sky: "bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:bg-sky-400/15 dark:text-sky-200 dark:ring-sky-300/25",
+  // Suit l'ambiance du site : bleu, orange ou rouge selon la temperature.
+  sky: "accent-wash accent-ink ring-[rgb(var(--accent)/0.22)]",
   emerald:
     "bg-amber-400/15 text-amber-800 ring-amber-500/25 dark:bg-amber-400/15 dark:text-amber-200 dark:ring-amber-300/25",
   amber: "bg-amber-400/15 text-amber-800 ring-amber-500/25 dark:bg-amber-400/15 dark:text-amber-200 dark:ring-amber-300/25",

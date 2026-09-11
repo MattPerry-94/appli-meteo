@@ -42,18 +42,19 @@ export function getUvLevel(value: number | undefined) {
 }
 
 
-export type TempBand = "cold" | "cool" | "mild" | "warm" | "hot";
+export type TempBand = "cool" | "warm" | "hot";
 
 /**
- * Palette du thermomètre : pilote le dégradé animé de la température affichée.
- * Une valeur absente retombe sur "mild", la teinte neutre.
+ * Ambiance chromatique du site, pilotee par la temperature ressentie :
+ *  - cool (< 16 C)  : bleus et blancs, teintes claires
+ *  - warm (16-25 C) : orange et jaune
+ *  - hot  (> 25 C)  : rouges
+ * Une valeur absente retombe sur "cool", la teinte par defaut.
  */
 export function getTempBand(value: number | undefined): TempBand {
   const temp = typeof value === "number" ? value : NaN;
-  if (!Number.isFinite(temp)) return "mild";
-  if (temp < 5) return "cold";
-  if (temp < 15) return "cool";
-  if (temp < 23) return "mild";
-  if (temp < 30) return "warm";
+  if (!Number.isFinite(temp)) return "cool";
+  if (temp < 16) return "cool";
+  if (temp <= 25) return "warm";
   return "hot";
 }

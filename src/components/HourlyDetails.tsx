@@ -50,7 +50,7 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
                 <div className="numeric text-xs font-bold text-slate-700 dark:text-zinc-200">
                   {formatTimeHHmmFromISODateTime(p.timeISO)}
                 </div>
-                <KindIcon kind={v.kind} className="text-sky-600 dark:text-sky-300" />
+                <KindIcon kind={v.kind} className="accent-ink" />
                 <div className="min-w-0">
                   <div className="numeric flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
                     <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">{formatTempC(p.tempC)}</span>

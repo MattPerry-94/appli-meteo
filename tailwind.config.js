@@ -20,7 +20,8 @@ export default {
         soft: "0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.16)",
         card: "0 1px 1px rgb(15 23 42 / 0.04), 0 10px 30px -14px rgb(15 23 42 / 0.22), 0 32px 60px -40px rgb(15 23 42 / 0.28)",
         lift: "0 2px 4px rgb(15 23 42 / 0.05), 0 18px 40px -16px rgb(15 23 42 / 0.26), 0 40px 80px -50px rgb(15 23 42 / 0.35)",
-        glow: "0 10px 30px -10px rgb(14 165 233 / 0.55)",
+        // Suit l'ambiance (voir --accent dans src/index.css)
+        glow: "0 10px 30px -10px rgb(var(--accent) / 0.55)",
       },
       transitionTimingFunction: {
         spring: "cubic-bezier(0.22, 1, 0.36, 1)",

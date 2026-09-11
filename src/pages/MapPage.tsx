@@ -111,7 +111,7 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
 
       {isRendering ? (
         <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
-          <span className="size-2 animate-pulse rounded-full bg-sky-500" />
+          <span className="accent-dot size-2 animate-pulse rounded-full" />
           Chargement de la carte officielle…
         </div>
       ) : null}
@@ -349,7 +349,7 @@ export default function MapPage() {
                   }}
                   className="btn btn-ghost rounded-2xl"
                 >
-                  <RefreshCcw className={cn("size-4 text-sky-600 dark:text-sky-300", isLoadingVigilance && "animate-spin")} />
+                  <RefreshCcw className={cn("accent-ink size-4", isLoadingVigilance && "animate-spin")} />
                   <span>Actualiser</span>
                 </button>
               </div>
