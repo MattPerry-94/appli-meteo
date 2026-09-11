@@ -95,7 +95,7 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
   }, [props.src]);
 
   return (
-    <div ref={containerRef} className="rounded-[1.35rem] bg-white p-2">
+    <div ref={containerRef} className="rounded-[1.35rem] bg-white p-2 shadow-inner">
       {pages.length > 0 ? (
         <div className="space-y-4">
           {pages.map((page) => (
@@ -109,9 +109,14 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
         </div>
       ) : null}
 
-      {isRendering ? <div className="py-6 text-center text-sm text-slate-500">Chargement de la carte officielle…</div> : null}
+      {isRendering ? (
+        <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
+          <span className="size-2 animate-pulse rounded-full bg-sky-500" />
+          Chargement de la carte officielle…
+        </div>
+      ) : null}
 
-      {error ? <div className="py-6 text-center text-sm text-rose-600">{error}</div> : null}
+      {error ? <div className="py-10 text-center text-sm font-medium text-rose-600">{error}</div> : null}
     </div>
   );
 }
@@ -218,28 +223,23 @@ export default function MapPage() {
   const formattedUpdatedAt = formatUpdatedAt(vigilanceUpdatedAt);
 
   return (
-    <div className="space-y-6">
-      <Card className="p-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div className="text-sm text-slate-600 dark:text-zinc-300">Carte météo</div>
-            <div className="mt-1 font-serif text-2xl tracking-tight">Radar et vigilances</div>
+    <div className="space-y-5">
+      <Card className="p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="eyebrow">Carte météo</div>
+            <div className="display mt-1 text-2xl">Radar et vigilances</div>
             <div className="mt-2 text-sm text-slate-500 dark:text-zinc-400">
               Ville active : {activeCity.name}
               {activeCity.postalCode ? ` (${activeCity.postalCode})` : ""}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="segment-group shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab("radar")}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ring-1 transition",
-                activeTab === "radar"
-                  ? "bg-sky-600 text-white ring-sky-600 shadow-sm"
-                  : "bg-white/80 text-slate-800 ring-slate-200/70 hover:bg-white dark:bg-white/5 dark:text-zinc-200 dark:ring-white/10 dark:hover:bg-white/10",
-              )}
+              className={cn("segment", activeTab === "radar" && "segment-active")}
             >
               <CloudRain className="size-4" />
               <span>Radar</span>
@@ -248,12 +248,7 @@ export default function MapPage() {
             <button
               type="button"
               onClick={() => setActiveTab("vigilances")}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ring-1 transition",
-                activeTab === "vigilances"
-                  ? "bg-sky-600 text-white ring-sky-600 shadow-sm"
-                  : "bg-white/80 text-slate-800 ring-slate-200/70 hover:bg-white dark:bg-white/5 dark:text-zinc-200 dark:ring-white/10 dark:hover:bg-white/10",
-              )}
+              className={cn("segment", activeTab === "vigilances" && "segment-active")}
             >
               <ShieldAlert className="size-4" />
               <span>Vigilances</span>
@@ -263,18 +258,20 @@ export default function MapPage() {
       </Card>
 
       {activeTab === "radar" ? (
-        <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
-          <div className="space-y-4">
-            <Card className="p-4">
+        <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+          <div className="space-y-5">
+            <Card className="p-5">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm text-slate-600 dark:text-zinc-300">Cartes météo</div>
-                  <div className="mt-1 font-serif text-2xl tracking-tight">Pluie, nuages, orages</div>
+                <div className="min-w-0">
+                  <div className="eyebrow">Cartes météo</div>
+                  <div className="display mt-1 text-2xl">Pluie, nuages, orages</div>
                 </div>
-                <Badge tone="sky">Carte</Badge>
+                <Badge tone="sky" className="shrink-0">
+                  Carte
+                </Badge>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="segment-group mt-4 grid w-full grid-cols-3">
                 {[
                   { id: "rain" as const, label: "Pluie", icon: CloudRain },
                   { id: "clouds" as const, label: "Nuages", icon: Cloud },
@@ -286,12 +283,7 @@ export default function MapPage() {
                       key={layer.id}
                       type="button"
                       onClick={() => setRadarLayer(layer.id)}
-                      className={cn(
-                        "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ring-1 transition",
-                        radarLayer === layer.id
-                          ? "bg-sky-600 text-white ring-sky-600 shadow-sm"
-                          : "bg-white/80 text-slate-800 ring-slate-200/70 hover:bg-white dark:bg-white/5 dark:text-zinc-200 dark:ring-white/10 dark:hover:bg-white/10",
-                      )}
+                      className={cn("segment px-2 sm:px-3.5", radarLayer === layer.id && "segment-active")}
                     >
                       <Icon className="size-4" />
                       <span>{layer.label}</span>
@@ -301,24 +293,26 @@ export default function MapPage() {
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card className="p-5">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm text-slate-600 dark:text-zinc-300">Zone suivie</div>
-                  <div className="mt-1 font-serif text-2xl tracking-tight">{activeCity.name}</div>
+                <div className="min-w-0">
+                  <div className="eyebrow">Zone suivie</div>
+                  <div className="display mt-1 truncate text-2xl">{activeCity.name}</div>
                 </div>
-                <Badge tone="zinc">Locale</Badge>
+                <Badge tone="zinc" className="shrink-0">
+                  Locale
+                </Badge>
               </div>
 
-              <div className="mt-4 grid gap-3 text-sm text-slate-600 dark:text-zinc-300">
-                <div className="rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200/70 dark:bg-white/5 dark:ring-white/10">
+              <div className="mt-4 grid gap-2.5 text-sm text-slate-600 dark:text-zinc-300">
+                <div className="tile numeric rounded-2xl p-3.5">
                   Ville active : {activeCity.name}
                   {activeCity.postalCode ? ` (${activeCity.postalCode})` : ""} - {activeCity.lat.toFixed(4).replace(".", ",")} ;{" "}
                   {activeCity.lon.toFixed(4).replace(".", ",")}
                 </div>
 
-                <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 p-3 text-amber-900 ring-1 ring-amber-200/70 dark:text-amber-100 dark:ring-amber-400/20">
-                  <AlertTriangle className="size-4" />
+                <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/25 bg-amber-400/10 p-3.5 text-amber-900 dark:border-amber-300/20 dark:text-amber-100">
+                  <AlertTriangle className="size-4 shrink-0" />
                   <span>La timeline et les heures de prévision se pilotent directement dans la carte.</span>
                 </div>
               </div>
@@ -326,18 +320,18 @@ export default function MapPage() {
           </div>
 
           <Card className="overflow-hidden p-2">
-            <div className="relative h-[620px] overflow-hidden rounded-[1.35rem]">
+            <div className="relative h-[620px] overflow-hidden rounded-[1.35rem] shadow-inner">
               <WindyEmbedMap radarLayer={radarLayer} lat={activeCity.lat} lon={activeCity.lon} />
             </div>
           </Card>
         </div>
       ) : (
-        <div className="space-y-4">
-          <Card className="p-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="text-sm text-slate-600 dark:text-zinc-300">Vigilances Météo-France</div>
-                <div className="mt-1 font-serif text-2xl tracking-tight">Carte nationale officielle</div>
+        <div className="space-y-5">
+          <Card className="p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="eyebrow">Vigilances Météo-France</div>
+                <div className="display mt-1 text-2xl">Carte nationale officielle</div>
                 <div className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Vigilances officielles pour la France.</div>
               </div>
 
@@ -347,21 +341,23 @@ export default function MapPage() {
                   onClick={() => {
                     refreshVigilance();
                   }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm font-medium text-slate-800 ring-1 ring-slate-200/70 shadow-sm transition hover:bg-white dark:bg-white/5 dark:text-zinc-200 dark:ring-white/10 dark:shadow-none dark:hover:bg-white/10"
+                  className="btn btn-ghost rounded-2xl"
                 >
-                  <RefreshCcw className="size-4" />
+                  <RefreshCcw className={cn("size-4 text-sky-600 dark:text-sky-300", isLoadingVigilance && "animate-spin")} />
                   <span>Actualiser</span>
                 </button>
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-zinc-400">
-              {formattedUpdatedAt ? <span>Dernière récupération : {formattedUpdatedAt}</span> : null}
-            </div>
+            {formattedUpdatedAt ? (
+              <div className="numeric mt-4 text-sm text-slate-500 dark:text-zinc-400">
+                Dernière récupération : {formattedUpdatedAt}
+              </div>
+            ) : null}
 
             {vigilanceError ? (
-              <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 p-3 text-sm text-rose-900 ring-1 ring-rose-200/70 dark:text-rose-100 dark:ring-rose-400/20">
-                <AlertTriangle className="size-4" />
+              <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-3.5 text-sm text-rose-800 dark:border-rose-300/20 dark:text-rose-100">
+                <AlertTriangle className="size-4 shrink-0" />
                 <span>{vigilanceError}</span>
               </div>
             ) : null}
@@ -371,7 +367,7 @@ export default function MapPage() {
             {vigilanceUrl ? (
               <PdfDocumentPreview src={vigilanceUrl} title="Carte nationale vigilance Météo-France" />
             ) : (
-              <div className="rounded-[1.35rem] bg-white px-6 py-16 text-center text-sm text-slate-500 dark:text-zinc-400">
+              <div className="rounded-[1.35rem] bg-white px-6 py-20 text-center text-sm text-slate-500 shadow-inner">
                 {isLoadingVigilance ? "Chargement de la carte officielle…" : "Aucune carte vigilance disponible pour le moment."}
               </div>
             )}

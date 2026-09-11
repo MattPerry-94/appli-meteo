@@ -59,13 +59,13 @@ function formatBulletinDate(value?: string) {
 
 function SkeletonCard() {
   return (
-    <Card className="h-[132px] p-4">
-      <div className="animate-pulse space-y-3">
-        <div className="h-4 w-40 rounded bg-slate-900/10 dark:bg-white/10" />
-        <div className="h-3 w-56 rounded bg-slate-900/10 dark:bg-white/10" />
-        <div className="mt-6 flex gap-2">
-          <div className="h-6 w-16 rounded-full bg-slate-900/10 dark:bg-white/10" />
-          <div className="h-6 w-16 rounded-full bg-slate-900/10 dark:bg-white/10" />
+    <Card className="h-[150px] p-5">
+      <div className="space-y-3">
+        <div className="skeleton h-4 w-40 rounded-md" />
+        <div className="skeleton h-3 w-56 rounded-md" />
+        <div className="flex gap-2 pt-5">
+          <div className="skeleton h-6 w-20 rounded-full" />
+          <div className="skeleton h-6 w-20 rounded-full" />
         </div>
       </div>
     </Card>
@@ -91,8 +91,10 @@ export default function Home() {
   const [departmentBulletin, setDepartmentBulletin] = useState<MeteoFranceDepartmentBulletin | null>(null);
   const [isLoadingBulletin, setIsLoadingBulletin] = useState(false);
 
+  const currentTempC = forecastSet?.consensus?.current?.tempC;
+
   const preventionCard = useMemo(() => {
-    const tempC = forecastSet?.consensus?.current?.tempC;
+    const tempC = currentTempC;
     if (typeof tempC !== "number") return null;
 
     if (tempC >= 28) {
@@ -124,7 +126,7 @@ export default function Home() {
     }
 
     return null;
-  }, [forecastSet?.consensus?.current?.tempC]);
+  }, [currentTempC]);
 
   const normalized = useMemo(() => query.trim(), [query]);
   const departmentCode = useMemo(() => inferDepartmentCode(activeCity), [activeCity]);
@@ -246,15 +248,17 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card className="p-4">
+    <div className="space-y-5">
+      <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+        <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm text-slate-600 dark:text-zinc-300">Ville active</div>
-              <div className="mt-1 font-serif text-2xl tracking-tight">{activeCity.name}</div>
+            <div className="min-w-0">
+              <div className="eyebrow">Ville active</div>
+              <div className="display mt-1 truncate text-2xl">{activeCity.name}</div>
             </div>
-            <Badge tone="zinc">{sourceLabel(citySource)}</Badge>
+            <Badge tone="zinc" className="shrink-0">
+              {sourceLabel(citySource)}
+            </Badge>
           </div>
 
           <div className="mt-4">
@@ -262,26 +266,32 @@ export default function Home() {
           </div>
 
           {isLocating ? (
-            <div className="mt-3 text-xs text-slate-500 dark:text-zinc-400">Recherche de la ville du navigateur…</div>
+            <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
+              <span className="size-1.5 animate-pulse rounded-full bg-sky-500" />
+              Recherche de la ville du navigateur…
+            </div>
           ) : null}
 
           {preventionCard ? (
             <div
               className={[
-                "mt-4 flex gap-3 rounded-xl p-3 text-sm ring-1",
+                "mt-4 flex gap-3 rounded-2xl border p-4 text-sm",
                 preventionCard.kind === "heat"
-                  ? "bg-amber-500/10 text-amber-950 ring-amber-200/70 dark:text-amber-100 dark:ring-amber-400/20"
-                  : "bg-sky-500/10 text-sky-950 ring-sky-200/70 dark:text-sky-100 dark:ring-sky-400/20",
+                  ? "border-amber-500/25 bg-amber-400/10 text-amber-900 dark:border-amber-300/20 dark:text-amber-100"
+                  : "border-sky-500/25 bg-sky-400/10 text-sky-900 dark:border-sky-300/20 dark:text-sky-100",
               ].join(" ")}
             >
-              <div className="mt-0.5">
+              <div className="mt-0.5 shrink-0">
                 {preventionCard.kind === "heat" ? <Sun className="size-4" /> : <Snowflake className="size-4" />}
               </div>
               <div className="min-w-0">
                 <div className="font-semibold">{preventionCard.title}</div>
-                <ul className="mt-2 space-y-1 text-sm leading-6">
+                <ul className="mt-2 space-y-1.5 text-sm leading-6 opacity-90">
                   {preventionCard.lines.map((line) => (
-                    <li key={line}>{line}</li>
+                    <li key={line} className="flex gap-2">
+                      <span className="mt-[0.6rem] size-1 shrink-0 rounded-full bg-current opacity-50" />
+                      <span>{line}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -289,34 +299,30 @@ export default function Home() {
           ) : null}
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm text-slate-600 dark:text-zinc-300">Recherche</div>
-              <div className="mt-1 font-serif text-2xl tracking-tight">Changer de ville</div>
+            <div className="min-w-0">
+              <div className="eyebrow">Recherche</div>
+              <div className="display mt-1 text-2xl">Changer de ville</div>
             </div>
-            <button
-              type="button"
-              onClick={locateFromBrowser}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm font-medium text-slate-800 ring-1 ring-slate-200/70 shadow-sm transition hover:bg-white dark:bg-white/5 dark:text-zinc-200 dark:ring-white/10 dark:shadow-none dark:hover:bg-white/10"
-            >
-              <LocateFixed className="size-4" />
+            <button type="button" onClick={locateFromBrowser} className="btn btn-ghost shrink-0 rounded-2xl">
+              <LocateFixed className="size-4 text-sky-600 dark:text-sky-300" />
               <span>Ma position</span>
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-slate-200/70 shadow-sm dark:bg-white/5 dark:ring-white/10 dark:shadow-none">
-            <Search className="size-4 text-slate-500 dark:text-zinc-400" />
+          <div className="field mt-4 flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5">
+            <Search className="size-4 shrink-0 text-slate-400 dark:text-zinc-500" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ex: Nice, Saint-Laurent-du-Var, Antibes…"
-              className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
-            {isSearching ? <div className="h-2 w-2 animate-pulse rounded-full bg-slate-500 dark:bg-zinc-400" /> : null}
+            {isSearching ? <div className="size-2 shrink-0 animate-pulse rounded-full bg-sky-500" /> : null}
           </div>
 
-          <div className="mt-4 space-y-2">
+          <div className="mt-3 space-y-2">
             {results.map((result) => (
               <button
                 key={result.id}
@@ -326,27 +332,27 @@ export default function Home() {
                   setQuery("");
                   setResults([]);
                 }}
-                className="w-full rounded-xl bg-white/70 px-3 py-3 text-left ring-1 ring-slate-200/70 shadow-sm transition hover:bg-white dark:bg-white/5 dark:ring-white/10 dark:shadow-none dark:hover:bg-white/7"
+                className="tile tile-interactive block w-full rounded-2xl px-3.5 py-3 text-left"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="break-words font-medium text-slate-900 dark:text-zinc-50">{result.name}</div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+                    <div className="break-words text-sm font-semibold text-slate-900 dark:text-zinc-50">{result.name}</div>
+                    <div className="numeric mt-1 text-xs text-slate-500 dark:text-zinc-400">
                       {[result.postalCode, result.adminArea, result.countryCode].filter(Boolean).join(" • ")}
                     </div>
                   </div>
-                  <div className="text-right text-xs text-slate-500 dark:text-zinc-400">
-                    <div>
+                  <div className="shrink-0 text-right text-xs text-slate-500 dark:text-zinc-400">
+                    <div className="numeric">
                       {result.lat.toFixed(4).replace(".", ",")} ; {result.lon.toFixed(4).replace(".", ",")}
                     </div>
-                    <div className="mt-1 text-slate-400 dark:text-zinc-500">Afficher cette ville</div>
+                    <div className="mt-1 font-medium text-sky-600 dark:text-sky-300">Afficher cette ville</div>
                   </div>
                 </div>
               </button>
             ))}
 
             {locationError ? (
-              <div className="rounded-xl bg-rose-500/10 p-3 text-sm text-rose-900 ring-1 ring-rose-200/70 dark:text-rose-100 dark:ring-rose-400/20">
+              <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-3.5 text-sm text-rose-800 dark:border-rose-300/20 dark:text-rose-100">
                 {locationError}
               </div>
             ) : null}
@@ -355,58 +361,59 @@ export default function Home() {
       </section>
 
       {error ? (
-        <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 p-3 text-sm text-rose-900 ring-1 ring-rose-200/70 dark:text-rose-100 dark:ring-rose-400/20">
-          <AlertTriangle className="size-4" />
+        <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-3.5 text-sm text-rose-800 dark:border-rose-300/20 dark:text-rose-100">
+          <AlertTriangle className="size-4 shrink-0" />
           <span>{error}</span>
         </div>
       ) : null}
 
       {departmentBulletin || isLoadingBulletin ? (
         <section>
-          <Card className="p-4">
+          <Card className="p-5">
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-sm text-slate-600 dark:text-zinc-300">Bulletin Météo-France</div>
-                <div className="mt-1 font-serif text-2xl tracking-tight">
+              <div className="min-w-0">
+                <div className="eyebrow">Bulletin Météo-France</div>
+                <div className="display mt-1 break-words text-2xl">
                   {departmentBulletin ? departmentBulletin.domainName : "Chargement du bulletin…"}
                 </div>
               </div>
 
-              {departmentBulletin?.riskName ? <Badge tone="amber">{departmentBulletin.riskName}</Badge> : null}
+              {departmentBulletin?.riskName ? (
+                <Badge tone="amber" className="shrink-0">
+                  {departmentBulletin.riskName}
+                </Badge>
+              ) : null}
             </div>
 
             {departmentBulletin ? (
-              <div className="mt-4 space-y-4">
-                <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-zinc-400">
+              <div className="mt-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
                   <span>{departmentBulletin.blocTitle}</span>
-                  <span>•</span>
+                  <span className="text-slate-300 dark:text-zinc-700">•</span>
                   <span>{departmentBulletin.typeName}</span>
                   {departmentBulletin.termName ? (
                     <>
-                      <span>•</span>
+                      <span className="text-slate-300 dark:text-zinc-700">•</span>
                       <span>{departmentBulletin.termName}</span>
                     </>
                   ) : null}
                 </div>
 
                 {departmentBulletin.startISO || departmentBulletin.endISO ? (
-                  <div className="rounded-xl bg-white/70 p-3 text-sm text-slate-600 ring-1 ring-slate-200/70 dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10">
+                  <div className="tile numeric rounded-2xl p-3.5 text-sm text-slate-600 dark:text-zinc-300">
                     {departmentBulletin.startISO ? `Début : ${formatBulletinDate(departmentBulletin.startISO)}` : null}
                     {departmentBulletin.startISO && departmentBulletin.endISO ? " • " : null}
                     {departmentBulletin.endISO ? `Fin : ${formatBulletinDate(departmentBulletin.endISO)}` : null}
                   </div>
                 ) : null}
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {departmentBulletin.sections.map((section, index) => (
-                    <div
-                      key={`${section.title ?? "section"}-${index}`}
-                      className="rounded-2xl bg-white/70 p-4 ring-1 ring-slate-200/70 dark:bg-white/5 dark:ring-white/10"
-                    >
+                    <div key={`${section.title ?? "section"}-${index}`} className="tile rounded-2xl p-4">
                       {section.title ? (
-                        <div className="mb-2 text-sm font-semibold text-slate-900 dark:text-zinc-100">{section.title}</div>
+                        <div className="mb-2 text-sm font-bold text-slate-900 dark:text-zinc-50">{section.title}</div>
                       ) : null}
-                      <div className="space-y-2 text-sm leading-6 text-slate-700 dark:text-zinc-300">
+                      <div className="space-y-2 text-sm leading-6 text-slate-600 dark:text-zinc-300">
                         {section.lines.map((line, lineIndex) => (
                           <p key={`${index}-${lineIndex}`}>{line}</p>
                         ))}
@@ -416,7 +423,7 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-xl bg-white/70 p-4 text-sm text-slate-600 ring-1 ring-slate-200/70 dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10">
+              <div className="tile mt-5 rounded-2xl p-4 text-sm text-slate-600 dark:text-zinc-300">
                 Recherche du bulletin zonal ou régional correspondant au département {departmentCode}…
               </div>
             )}
