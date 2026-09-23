@@ -39,6 +39,9 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
     if (!props.src || !containerRef.current) return;
 
     let isActive = true;
+    // Le document pdf.js garde ses pages et son worker en memoire tant qu'il
+    // n'est pas detruit : on le libere des que le rendu en images est fait.
+    const loadingTask = getDocument({ url: props.src });
 
     async function renderDocument() {
       setIsRendering(true);
@@ -46,7 +49,7 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
       setPages([]);
 
       try {
-        const pdf = await getDocument({ url: props.src }).promise;
+        const pdf = await loadingTask.promise;
         const containerWidth = Math.max(containerRef.current.clientWidth - 16, 320);
         const nextPages: PdfPreviewPage[] = [];
 
@@ -72,6 +75,8 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
             pageNumber,
             dataUrl: canvas.toDataURL("image/png"),
           });
+          page.cleanup();
+          if (!isActive) break;
         }
 
         if (isActive) {
@@ -87,7 +92,9 @@ function PdfDocumentPreview(props: { src: string | null; title: string }) {
       }
     }
 
-    void renderDocument();
+    void renderDocument().finally(() => {
+      void loadingTask.destroy();
+    });
 
     return () => {
       isActive = false;
@@ -181,14 +188,19 @@ export default function MapPage() {
   const [vigilanceUpdatedAt, setVigilanceUpdatedAt] = useState<string | null>(null);
   const [vigilanceError, setVigilanceError] = useState<string | null>(null);
   const [isLoadingVigilance, setIsLoadingVigilance] = useState(false);
+  const vigilanceRequestRef = useRef<AbortController | null>(null);
 
   function refreshVigilance() {
+    // Un nouveau clic annule la recuperation precedente plutot que de la doubler.
+    vigilanceRequestRef.current?.abort();
     const controller = new AbortController();
+    vigilanceRequestRef.current = controller;
     setIsLoadingVigilance(true);
     setVigilanceError(null);
 
     fetchMeteoFranceNationalCardDocument({ signal: controller.signal })
       .then((document) => {
+        if (controller.signal.aborted) return;
         const nextUrl = URL.createObjectURL(document.blob);
 
         setVigilanceUrl((previous) => {
@@ -198,11 +210,12 @@ export default function MapPage() {
         setVigilanceUpdatedAt(document.updatedAtISO);
       })
       .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
         const message = error instanceof Error ? error.message : "Impossible de charger la carte Météo-France.";
         setVigilanceError(message);
       })
       .finally(() => {
-        setIsLoadingVigilance(false);
+        if (!controller.signal.aborted) setIsLoadingVigilance(false);
       });
 
     return controller;
