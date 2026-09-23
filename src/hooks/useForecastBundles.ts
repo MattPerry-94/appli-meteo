@@ -22,12 +22,16 @@ export function useForecastBundles(cities: FavoriteCity[]) {
   citiesRef.current = cities;
 
   // Empêche les rafraîchissements de s'empiler quand on bascule rapidement
-  // d'onglet pendant qu'une requête est déjà en vol.
-  const isFetchingRef = useRef(false);
+  // d'onglet pendant qu'une requête est déjà en vol. Le verrou est propre à
+  // chaque montage de l'effet (identifié par son signal) : un verrou global
+  // bloquait le chargement d'une nouvelle ville tant que la requête annulée de
+  // la précédente n'était pas retombée — et, en dev, tout premier chargement
+  // (StrictMode monte l'effet deux fois).
+  const inFlightSignalRef = useRef<AbortSignal | null>(null);
 
   const load = useCallback(async (signal: AbortSignal) => {
-    if (isFetchingRef.current || signal.aborted) return;
-    isFetchingRef.current = true;
+    if (inFlightSignalRef.current === signal || signal.aborted) return;
+    inFlightSignalRef.current = signal;
 
     const targets = citiesRef.current;
     setIsLoading(true);
@@ -44,7 +48,7 @@ export function useForecastBundles(cities: FavoriteCity[]) {
       if (signal.aborted) return;
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     } finally {
-      isFetchingRef.current = false;
+      if (inFlightSignalRef.current === signal) inFlightSignalRef.current = null;
       if (!signal.aborted) setIsLoading(false);
     }
   }, []);
