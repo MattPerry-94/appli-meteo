@@ -416,7 +416,8 @@ export async function searchCities(query: string, options?: { signal?: AbortSign
     url.searchParams.set("format", "json");
 
     const res = await fetch(url.toString(), { signal });
-    if (!res.ok) return [];
+    // Une erreur HTTP doit se distinguer d'une recherche sans resultat.
+    if (!res.ok) throw new Error(`Recherche de villes impossible (${res.status}).`);
     const data = (await res.json()) as { results?: Array<Record<string, unknown>> };
     const results = data.results ?? [];
 

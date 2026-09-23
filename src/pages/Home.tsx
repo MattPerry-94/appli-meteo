@@ -72,6 +72,9 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<OpenMeteoGeocodingResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  /** Derniere requete effectivement aboutie : sert a afficher "aucun resultat". */
+  const [searchedQuery, setSearchedQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [departmentBulletin, setDepartmentBulletin] = useState<MeteoFranceDepartmentBulletin | null>(null);
@@ -125,15 +128,27 @@ export default function Home() {
     const timeout = window.setTimeout(async () => {
       if (!normalized) {
         setResults([]);
+        setSearchError(null);
+        setSearchedQuery("");
+        setIsSearching(false);
         return;
       }
 
       setIsSearching(true);
       try {
         const next = await searchCities(normalized, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         setResults(next);
+        setSearchError(null);
+        setSearchedQuery(normalized);
+      } catch {
+        // Une frappe suivante annule la requete en vol : ce n'est pas une erreur.
+        if (controller.signal.aborted) return;
+        setResults([]);
+        setSearchError("La recherche de villes est indisponible pour le moment. Réessayez dans un instant.");
+        setSearchedQuery(normalized);
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted) setIsSearching(false);
       }
     }, 220);
 
@@ -312,6 +327,11 @@ export default function Home() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setQuery("");
+              }}
+              type="search"
+              aria-label="Rechercher une ville"
               placeholder="Ex: Nice, Saint-Laurent-du-Var, Antibes…"
               className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
@@ -346,6 +366,18 @@ export default function Home() {
                 </div>
               </button>
             ))}
+
+            {searchError ? (
+              <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-3.5 text-sm text-rose-800 dark:border-rose-300/20 dark:text-rose-100">
+                {searchError}
+              </div>
+            ) : null}
+
+            {!searchError && !isSearching && normalized && searchedQuery === normalized && !results.length ? (
+              <div className="tile rounded-2xl p-3.5 text-sm text-slate-500 dark:text-zinc-400">
+                Aucune ville trouvée pour « {normalized} ».
+              </div>
+            ) : null}
 
             {locationError ? (
               <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-3.5 text-sm text-rose-800 dark:border-rose-300/20 dark:text-rose-100">
