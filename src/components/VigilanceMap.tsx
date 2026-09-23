@@ -101,7 +101,10 @@ export function VigilanceMap(props: { snapshot: VigilanceSnapshot; highlightCode
             <select
               value={String(filter)}
               onChange={(e) => setFilter(e.target.value === "all" ? "all" : (Number(e.target.value) as VigilanceRiskId))}
-              className="bg-transparent font-semibold text-slate-800 outline-none dark:text-zinc-100"
+              // La liste déroulante est dessinée par le système : sans couleurs
+              // explicites, ses options héritaient du texte clair du thème
+              // sombre sur un fond resté blanc.
+              className="bg-transparent font-semibold text-slate-800 outline-none dark:text-zinc-100 dark:[color-scheme:dark] [&>option]:bg-white [&>option]:text-slate-900 dark:[&>option]:bg-zinc-900 dark:[&>option]:text-zinc-100"
             >
               <option value="all">Tous les risques</option>
               {ALL_RISKS.map((riskId) => (
