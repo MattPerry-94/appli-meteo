@@ -11,6 +11,7 @@ import { BulletinCard } from "@/components/BulletinCard";
 import { PreventionCard } from "@/components/PreventionCard";
 import { VigilanceStrip } from "@/components/VigilanceStrip";
 import { Forecast7Days } from "@/components/Forecast7Days";
+import { ForecastChart48h } from "@/components/ForecastChart48h";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Notice } from "@/components/Notice";
@@ -113,6 +114,10 @@ export default function Home() {
           <BulletinCard bulletin={bulletin} departmentCode={departmentCode} />
         </section>
       ) : null}
+
+      <section>
+        <ForecastChart48h forecastSet={forecastSet} />
+      </section>
 
       <section>
         <Forecast7Days forecastSet={forecastSet} />

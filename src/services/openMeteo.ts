@@ -68,6 +68,8 @@ export type HourlyForecastPoint = {
   tempC?: number;
   /** Consensus seulement : demi-écart de température entre modèles. */
   tempSpreadC?: number;
+  /** Consensus seulement : modèle le plus bas et le plus haut (bande du graphique). */
+  tempRangeC?: [number, number];
   apparentTempC?: number;
   precipProbabilityPct?: number;
   precipMm?: number;
@@ -473,6 +475,7 @@ function buildConsensusHourly(models: Record<ForecastSourceId, CityForecastBundl
       timeISO,
       tempC: averageDefined(entries.map((entry) => entry.point.tempC)),
       tempSpreadC: halfSpread(entries.map((entry) => entry.point.tempC)),
+      tempRangeC: rangeOf(entries.map((entry) => entry.point.tempC)),
       apparentTempC: averageDefined(entries.map((entry) => entry.point.apparentTempC)),
       precipProbabilityPct: averageDefined(entries.map((entry) => entry.point.precipProbabilityPct)),
       precipMm: averageDefined(entries.map((entry) => entry.point.precipMm)),

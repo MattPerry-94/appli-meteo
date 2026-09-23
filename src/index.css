@@ -887,3 +887,52 @@
   background: linear-gradient(180deg, rgb(30 41 59 / 0.9), rgb(15 23 42 / 0.95));
   border-color: rgb(255 255 255 / 0.1);
 }
+
+/* ------------------------------------------------------------------ */
+/* Graphique 48 h. La courbe est a l'encre du texte, pas a l'accent :  */
+/* l'accent change de teinte avec la temperature et, en ambiance       */
+/* froide, se confondait avec le bleu de la pluie. Le bleu de la pluie */
+/* est valide (luminosite, contraste) sur les deux fonds.              */
+/* ------------------------------------------------------------------ */
+:root {
+  --chart-ink: 30 41 59;
+  --chart-band: 15 23 42;
+  --chart-band-alpha: 0.1;
+  --chart-rain: 47 127 224;
+}
+
+.dark {
+  --chart-ink: 241 245 249;
+  --chart-band: 255 255 255;
+  --chart-band-alpha: 0.13;
+  --chart-rain: 61 142 240;
+}
+
+.chart-line-stroke {
+  stroke: rgb(var(--chart-ink));
+}
+
+.chart-dot-fill {
+  fill: rgb(var(--chart-ink));
+}
+
+.chart-band-fill {
+  fill: rgb(var(--chart-band) / var(--chart-band-alpha));
+}
+
+.chart-rain-fill {
+  fill: rgb(var(--chart-rain));
+}
+
+.chart-line-swatch {
+  background-color: rgb(var(--chart-ink));
+}
+
+.chart-band-swatch {
+  background-color: rgb(var(--chart-band) / var(--chart-band-alpha));
+  box-shadow: inset 0 0 0 1px rgb(var(--chart-band) / 0.18);
+}
+
+.chart-rain-swatch {
+  background-color: rgb(var(--chart-rain));
+}
