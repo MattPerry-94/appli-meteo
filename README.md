@@ -40,12 +40,16 @@ reste de l'application fonctionne.
 > `VITE_*` dans le bundle JavaScript envoyé au navigateur : elle deviendrait
 > publique. Elle est ici lue uniquement côté serveur, par le proxy de dev
 > ([vite.config.ts](vite.config.ts)) en local et par la fonction serverless
-> [api/meteofrance/[...path].ts](api/meteofrance/%5B...path%5D.ts) en
+> [api/meteofrance.ts](api/meteofrance.ts) en
 > production. Le navigateur n'appelle que `/api/meteofrance/*`.
 
 ## Déploiement (Vercel)
 
-Le dossier `api/` est déployé automatiquement comme fonction Edge. Déclarez
+Le dossier `api/` est déployé automatiquement comme fonction Edge.
+[vercel.json](vercel.json) réécrit `/api/meteofrance/<endpoint>` vers
+`/api/meteofrance?path=<endpoint>` (Vercel ne route pas les fichiers
+« attrape-tout » `[...path].ts` hors Next.js) et renvoie les autres chemins vers
+`index.html`, pour que `/carte` se recharge sans 404. Déclarez
 `METEOFRANCE_API_KEY` dans **Settings → Environment Variables**, sans préfixe.
 Aucune autre configuration n'est nécessaire : `npm run build` produit le site
 statique et Vercel route `/api/*` vers la fonction.
@@ -85,7 +89,8 @@ src/
                 (fetch + rafraîchissement),
                 useCitySearch, useGeolocatedCity, useTheme, useAmbience
 api/
-  meteofrance/  Proxy serveur détenant la clé Météo-France
+  meteofrance.ts  Proxy serveur détenant la clé Météo-France
+vercel.json     Routage de /api/meteofrance/* vers le proxy, et repli SPA
 ```
 
 Les prévisions sont rafraîchies toutes les 10 minutes et au retour sur l'onglet.

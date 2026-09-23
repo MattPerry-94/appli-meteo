@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        // Équivalent local de api/meteofrance/[...path].ts : la clé est ajoutée
+        // Équivalent local de api/meteofrance.ts : la clé est ajoutée
         // ici, côté serveur de dev, et ne transite jamais par le navigateur.
         "/api/meteofrance": {
           target: "https://public-api.meteofrance.fr",

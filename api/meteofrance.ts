@@ -31,8 +31,13 @@ export default async function handler(request: Request): Promise<Response> {
     return problem(500, "Clé Météo-France absente côté serveur (variable d'environnement METEOFRANCE_API_KEY).");
   }
 
+  // Hors Next.js, Vercel ne route pas les fichiers « attrape-tout »
+  // ([...path].ts) : vercel.json réécrit /api/meteofrance/<endpoint> vers
+  // /api/meteofrance?path=<endpoint>. Le chemin brut reste accepté au cas où
+  // la fonction recevrait l'URL d'origine.
   const requestUrl = new URL(request.url);
-  const path = requestUrl.pathname.replace(/^\/api\/meteofrance\/?/, "").replace(/^\/+|\/+$/g, "");
+  const rawPath = requestUrl.searchParams.get("path") ?? requestUrl.pathname.replace(/^\/api\/meteofrance\/?/, "");
+  const path = rawPath.replace(/^\/+|\/+$/g, "");
 
   if (!ALLOWED_PATHS.has(path)) {
     return problem(404, "Ressource Météo-France inconnue.");
