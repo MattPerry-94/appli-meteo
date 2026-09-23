@@ -46,6 +46,23 @@ describe("proxy Météo-France", () => {
     expect(((await response.json()) as { error: string }).error).toMatch(/METEOFRANCE_API_KEY/);
   });
 
+  it("retire les guillemets recopiés autour de la clé", async () => {
+    process.env.METEOFRANCE_API_KEY = ' "cle-de-test" ';
+    await handler(new Request("https://site.test/api/meteofrance?path=cartevigilance/encours"));
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get("ApiKey")).toBe("cle-de-test");
+  });
+
+  it("explique une clé refusée par Météo-France", async () => {
+    fetchMock.mockResolvedValueOnce(new Response('{"fault":{}}', { status: 403 }));
+    const response = await handler(new Request("https://site.test/api/meteofrance?path=cartevigilance/encours"));
+    expect(response.status).toBe(403);
+    const { error } = (await response.json()) as { error: string };
+    expect(error).toMatch(/refuse la clé/);
+    expect(error).toContain("11 caractères");
+    expect(error).not.toContain("cle-de-test");
+  });
+
   it("ne met pas une erreur de Météo-France en cache", async () => {
     fetchMock.mockResolvedValueOnce(new Response('{"detail":"no matching blob"}', { status: 404 }));
     const response = await handler(new Request("https://site.test/api/meteofrance?path=cartevigilance/encours"));

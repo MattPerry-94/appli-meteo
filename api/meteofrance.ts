@@ -26,7 +26,9 @@ export default async function handler(request: Request): Promise<Response> {
     return problem(405, "Méthode non autorisée.");
   }
 
-  const apiKey = process.env.METEOFRANCE_API_KEY?.trim();
+  // Des guillemets recopiés depuis un .env (METEOFRANCE_API_KEY="...") font
+  // partie de la valeur sur Vercel : Météo-France refuserait alors la clé.
+  const apiKey = process.env.METEOFRANCE_API_KEY?.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
   if (!apiKey) {
     return problem(500, "Clé Météo-France absente côté serveur (variable d'environnement METEOFRANCE_API_KEY).");
   }
@@ -67,6 +69,18 @@ export default async function handler(request: Request): Promise<Response> {
   const disposition = upstream.headers.get("content-disposition");
   if (contentType) headers.set("content-type", contentType);
   if (disposition) headers.set("content-disposition", disposition);
+
+  // Clé refusée : la cause est presque toujours une valeur mal recopiée dans
+  // Vercel (clé tronquée — elle fait environ 1 500 caractères —, ancienne clé
+  // ou abonnement sans l'API Vigilance). La longueur seule ne révèle rien de
+  // la clé mais permet de la comparer à celle du .env local.
+  if (upstream.status === 401 || upstream.status === 403) {
+    return problem(
+      upstream.status,
+      `Météo-France refuse la clé configurée (${upstream.status}, ${apiKey.length} caractères reçus). ` +
+        "Vérifiez METEOFRANCE_API_KEY dans Vercel : clé complète, sans guillemets, abonnée à l'API DPVigilance, puis redéployez.",
+    );
+  }
 
   return new Response(upstream.body, { status: upstream.status, headers });
 }
