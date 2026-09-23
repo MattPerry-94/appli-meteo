@@ -17,7 +17,6 @@ export default defineConfig(({ mode }) => {
           // Sépare les grosses dépendances du code applicatif : sans ça le bundle
           // unique dépasse la limite de 500 kB et Rollup émet un avertissement.
           manualChunks: {
-            pdfjs: ['pdfjs-dist'],
             react: ['react', 'react-dom', 'react-router-dom'],
           },
         },

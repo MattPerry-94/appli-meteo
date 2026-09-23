@@ -9,8 +9,9 @@ bulletins de vigilance Météo-France pour la ville active.
   d'accord entre eux.
 - **Prévisions à 7 jours** détaillées heure par heure, consultables modèle par
   modèle ou en consensus.
-- **Vigilance Météo-France** — bulletin du département de la ville active et
-  carte nationale officielle (PDF rendu dans la page).
+- **Vigilance Météo-France** — couleur de vigilance et bulletin du département
+  de la ville active, et carte de France interactive des vigilances
+  (aujourd'hui / demain, filtrable par risque).
 - **Carte radar** — pluie, nuages et orages via l'embed Windy.
 - **Ville active** déterminée par géolocalisation du navigateur, ou par
   recherche manuelle ; elle est mémorisée localement.
@@ -72,13 +73,16 @@ lint, typecheck, tests et build à chaque push sur `main` et sur les pull reques
 ```
 src/
   components/   Card, Badge, Notice, WeatherIcon, CityCard, CitySearchCard,
-                BulletinCard, PreventionCard, Forecast7Days, HourlyDetails, AppShell
+                BulletinCard, PreventionCard, VigilanceStrip, VigilanceMap,
+                Forecast7Days, HourlyDetails, AppShell
+  data/         franceDepartments.ts (contours SVG, IGN Admin Express, Licence ouverte)
   pages/        Home (prévisions + recherche), MapPage (radar + vigilances)
   services/     openMeteo.ts (prévisions, géocodage), meteoFranceVigilance.ts
   utils/        forecastConsensus.ts (moyennes + fiabilité), department.ts
                 (code département d'une ville), format, weather
   stores/       appStore.ts (ville active, persistée via zustand/persist)
-  hooks/        useForecastBundles, useDepartmentBulletin (fetch + rafraîchissement),
+  hooks/        useForecastBundles, useDepartmentBulletin, useVigilanceSnapshot
+                (fetch + rafraîchissement),
                 useCitySearch, useGeolocatedCity, useTheme, useAmbience
 api/
   meteofrance/  Proxy serveur détenant la clé Météo-France

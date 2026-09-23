@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Cloud, CloudRain, RefreshCcw, ShieldAlert, Zap } from "lucide-react";
-import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
 import { Notice } from "@/components/Notice";
 import { cn } from "@/lib/utils";
-import { fetchMeteoFranceNationalCardDocument } from "@/services/meteoFranceVigilance";
+import { VigilanceMap } from "@/components/VigilanceMap";
+import { useVigilanceSnapshot } from "@/hooks/useVigilanceSnapshot";
+import { inferDepartmentCode } from "@/utils/department";
 import { useAppStore } from "@/stores/appStore";
 
 type TabId = "radar" | "vigilances";
 type RadarLayerId = "rain" | "clouds" | "storms";
-
-GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 function formatUpdatedAt(dateISO: string | null) {
   if (!dateISO) return null;
@@ -23,110 +23,6 @@ function formatUpdatedAt(dateISO: string | null) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(dateISO));
-}
-
-type PdfPreviewPage = {
-  pageNumber: number;
-  dataUrl: string;
-};
-
-function PdfDocumentPreview(props: { src: string | null; title: string }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [pages, setPages] = useState<PdfPreviewPage[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isRendering, setIsRendering] = useState(false);
-
-  useEffect(() => {
-    if (!props.src || !containerRef.current) return;
-
-    let isActive = true;
-    // Le document pdf.js garde ses pages et son worker en memoire tant qu'il
-    // n'est pas detruit : on le libere des que le rendu en images est fait.
-    const loadingTask = getDocument({ url: props.src });
-
-    async function renderDocument() {
-      setIsRendering(true);
-      setError(null);
-      setPages([]);
-
-      try {
-        const pdf = await loadingTask.promise;
-        const containerWidth = Math.max(containerRef.current.clientWidth - 16, 320);
-        const nextPages: PdfPreviewPage[] = [];
-
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-          const page = await pdf.getPage(pageNumber);
-          const initialViewport = page.getViewport({ scale: 1 });
-          const scale = containerWidth / initialViewport.width;
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-
-          if (!context) {
-            throw new Error("Canvas indisponible.");
-          }
-
-          canvas.width = Math.ceil(viewport.width);
-          canvas.height = Math.ceil(viewport.height);
-
-          const renderTask = page.render({ canvas, canvasContext: context, viewport }) as { promise: Promise<unknown> };
-          await renderTask.promise;
-
-          nextPages.push({
-            pageNumber,
-            dataUrl: canvas.toDataURL("image/png"),
-          });
-          page.cleanup();
-          if (!isActive) break;
-        }
-
-        if (isActive) {
-          setPages(nextPages);
-          setIsRendering(false);
-        }
-      } catch (nextError) {
-        if (isActive) {
-          const message = nextError instanceof Error ? nextError.message : "Impossible d'afficher la carte officielle.";
-          setError(message);
-          setIsRendering(false);
-        }
-      }
-    }
-
-    void renderDocument().finally(() => {
-      void loadingTask.destroy();
-    });
-
-    return () => {
-      isActive = false;
-    };
-  }, [props.src]);
-
-  return (
-    <div ref={containerRef} className="rounded-[1.35rem] bg-white p-2 shadow-inner">
-      {pages.length > 0 ? (
-        <div className="space-y-4">
-          {pages.map((page) => (
-            <img
-              key={page.pageNumber}
-              src={page.dataUrl}
-              alt={`${props.title} - page ${page.pageNumber}`}
-              className="mx-auto block w-full max-w-full rounded-xl"
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {isRendering ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
-          <span className="accent-dot size-2 animate-pulse rounded-full" />
-          Chargement de la carte officielle…
-        </div>
-      ) : null}
-
-      {error ? <div className="py-10 text-center text-sm font-medium text-rose-600">{error}</div> : null}
-    </div>
-  );
 }
 
 function buildWindyEmbedUrl(params: { radarLayer: RadarLayerId; lat: number; lon: number }) {
@@ -182,59 +78,17 @@ function WindyEmbedMap(props: { radarLayer: RadarLayerId; lat: number; lon: numb
 export default function MapPage() {
   const activeCity = useAppStore((s) => s.activeCity);
 
-  const [activeTab, setActiveTab] = useState<TabId>("radar");
+  // L'onglet vit dans l'URL (/carte?vue=vigilances) : lien partageable, et le
+  // bouton retour du navigateur revient à l'onglet précédent.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: TabId = searchParams.get("vue") === "vigilances" ? "vigilances" : "radar";
+  const setActiveTab = (tab: TabId) => setSearchParams(tab === "radar" ? {} : { vue: tab });
   const [radarLayer, setRadarLayer] = useState<RadarLayerId>("rain");
 
-  const [vigilanceUrl, setVigilanceUrl] = useState<string | null>(null);
-  const [vigilanceUpdatedAt, setVigilanceUpdatedAt] = useState<string | null>(null);
-  const [vigilanceError, setVigilanceError] = useState<string | null>(null);
-  const [isLoadingVigilance, setIsLoadingVigilance] = useState(false);
-  const vigilanceRequestRef = useRef<AbortController | null>(null);
+  const vigilance = useVigilanceSnapshot();
+  const departmentCode = useMemo(() => inferDepartmentCode(activeCity), [activeCity]);
 
-  function refreshVigilance() {
-    // Un nouveau clic annule la recuperation precedente plutot que de la doubler.
-    vigilanceRequestRef.current?.abort();
-    const controller = new AbortController();
-    vigilanceRequestRef.current = controller;
-    setIsLoadingVigilance(true);
-    setVigilanceError(null);
-
-    fetchMeteoFranceNationalCardDocument({ signal: controller.signal })
-      .then((document) => {
-        if (controller.signal.aborted) return;
-        const nextUrl = URL.createObjectURL(document.blob);
-
-        setVigilanceUrl((previous) => {
-          if (previous) URL.revokeObjectURL(previous);
-          return nextUrl;
-        });
-        setVigilanceUpdatedAt(document.updatedAtISO);
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        const message = error instanceof Error ? error.message : "Impossible de charger la carte Météo-France.";
-        setVigilanceError(message);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoadingVigilance(false);
-      });
-
-    return controller;
-  }
-
-  useEffect(() => {
-    if (activeTab !== "vigilances") return;
-    const controller = refreshVigilance();
-    return () => controller.abort();
-  }, [activeTab]);
-
-  useEffect(() => {
-    return () => {
-      if (vigilanceUrl) URL.revokeObjectURL(vigilanceUrl);
-    };
-  }, [vigilanceUrl]);
-
-  const formattedUpdatedAt = formatUpdatedAt(vigilanceUpdatedAt);
+  const formattedUpdatedAt = formatUpdatedAt(vigilance.snapshot?.updatedAtISO ?? null);
 
   return (
     <div className="space-y-5">
@@ -348,19 +202,25 @@ export default function MapPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <div className="eyebrow">Vigilances Météo-France</div>
-                <div className="display mt-1 text-2xl">Carte nationale officielle</div>
-                <div className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Vigilances officielles pour la France.</div>
+                <div className="display mt-1 text-2xl">Carte des vigilances</div>
+                <div className="mt-2 text-sm text-slate-500 dark:text-zinc-400">
+                  Niveaux officiels par département, d'après{" "}
+                  <a href="https://vigilance.meteofrance.fr/fr" target="_blank" rel="noreferrer" className="accent-ink font-medium underline-offset-2 hover:underline">
+                    vigilance.meteofrance.fr
+                  </a>
+                  .
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    refreshVigilance();
+                    void vigilance.refresh();
                   }}
                   className="btn btn-ghost rounded-2xl"
                 >
-                  <RefreshCcw className={cn("accent-ink size-4", isLoadingVigilance && "animate-spin")} />
+                  <RefreshCcw className={cn("accent-ink size-4", vigilance.isLoading && "animate-spin")} />
                   <span>Actualiser</span>
                 </button>
               </div>
@@ -368,19 +228,19 @@ export default function MapPage() {
 
             {formattedUpdatedAt ? (
               <div className="numeric mt-4 text-sm text-slate-500 dark:text-zinc-400">
-                Dernière récupération : {formattedUpdatedAt}
+                Mise à jour Météo-France : {formattedUpdatedAt}
               </div>
             ) : null}
 
-            {vigilanceError ? <Notice className="mt-4">{vigilanceError}</Notice> : null}
+            {vigilance.error ? <Notice className="mt-4">{vigilance.error}</Notice> : null}
           </Card>
 
-          <Card className="overflow-hidden p-2">
-            {vigilanceUrl ? (
-              <PdfDocumentPreview src={vigilanceUrl} title="Carte nationale vigilance Météo-France" />
+          <Card className="p-5">
+            {vigilance.snapshot ? (
+              <VigilanceMap snapshot={vigilance.snapshot} highlightCode={departmentCode} />
             ) : (
-              <div className="rounded-[1.35rem] bg-white px-6 py-20 text-center text-sm text-slate-500 shadow-inner">
-                {isLoadingVigilance ? "Chargement de la carte officielle…" : "Aucune carte vigilance disponible pour le moment."}
+              <div className="tile rounded-2xl px-6 py-20 text-center text-sm text-slate-500 dark:text-zinc-400">
+                {vigilance.isLoading ? "Chargement des vigilances…" : "Aucune carte de vigilance disponible pour le moment."}
               </div>
             )}
           </Card>

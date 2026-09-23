@@ -4,8 +4,7 @@
  * La clé n'existe que côté serveur (METEOFRANCE_API_KEY, sans préfixe VITE_)
  * et n'est donc jamais envoyée au navigateur : le client appelle
  * /api/meteofrance/<endpoint>, cette fonction ajoute l'en-tête ApiKey et relaie
- * la réponse telle quelle (le corps est streamé, ce qui préserve le PDF de la
- * carte nationale).
+ * la réponse telle quelle (le corps est streamé).
  */
 
 export const config = { runtime: "edge" };
@@ -13,7 +12,7 @@ export const config = { runtime: "edge" };
 const UPSTREAM_BASE = "https://public-api.meteofrance.fr/public/DPVigilance/v1";
 
 /** Allowlist : empêche d'utiliser le proxy comme relais ouvert vers l'API. */
-const ALLOWED_PATHS = new Set(["textesvigilance/encours", "cartevigilance/encours", "cartenationale/encours"]);
+const ALLOWED_PATHS = new Set(["textesvigilance/encours", "cartevigilance/encours"]);
 
 function problem(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {

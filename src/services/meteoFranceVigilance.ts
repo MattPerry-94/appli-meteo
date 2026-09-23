@@ -24,14 +24,6 @@ export type VigilanceSnapshot = {
   sourceUrl: string;
 };
 
-export type VigilanceNationalCardDocument = {
-  blob: Blob;
-  filename?: string;
-  contentType: string;
-  updatedAtISO: string;
-  sourceUrl: string;
-};
-
 export type MeteoFranceBulletinSection = {
   title?: string;
   lines: string[];
@@ -416,39 +408,6 @@ export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal
     return {
       updatedAtISO: typeof product?.update_time === "string" ? product.update_time : new Date().toISOString(),
       periods,
-      sourceUrl: DEFAULT_SOURCE_URL,
-    };
-  } finally {
-    cancel();
-  }
-}
-
-export async function fetchMeteoFranceNationalCardDocument(options?: { signal?: AbortSignal }): Promise<VigilanceNationalCardDocument> {
-  const { signal, cancel } = withTimeout(20000, options?.signal);
-
-  try {
-    const response = await fetch(`${getConfiguredBaseUrl()}/cartenationale/encours`, {
-      signal,
-      cache: "no-store",
-      headers: {
-        Accept: "*/*",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(await describeFailure(response, "Récupération de la carte nationale impossible"));
-    }
-
-    const blob = await response.blob();
-    const contentType = response.headers.get("content-type") ?? "application/pdf";
-    const disposition = response.headers.get("content-disposition") ?? "";
-    const filenameMatch = disposition.match(/filename="?([^"]+)"?/i);
-
-    return {
-      blob,
-      filename: filenameMatch?.[1],
-      contentType,
-      updatedAtISO: new Date().toISOString(),
       sourceUrl: DEFAULT_SOURCE_URL,
     };
   } finally {
