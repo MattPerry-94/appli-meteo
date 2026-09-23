@@ -45,7 +45,9 @@ reste de l'application fonctionne.
 
 ## Déploiement (Vercel)
 
-Le dossier `api/` est déployé automatiquement comme fonction Edge.
+Le dossier `api/` est déployé automatiquement comme fonction Node.js, dans la
+région Paris (`cdg1`, voir `regions` dans vercel.json) : depuis le réseau Edge,
+Météo-France refusait une clé pourtant valide (403).
 [vercel.json](vercel.json) réécrit `/api/meteofrance/<endpoint>` vers
 `/api/meteofrance?path=<endpoint>` (Vercel ne route pas les fichiers
 « attrape-tout » `[...path].ts` hors Next.js) et renvoie les autres chemins vers

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import handler from "./meteofrance";
+import { GET as handler } from "./meteofrance";
 
 const UPSTREAM = "https://public-api.meteofrance.fr/public/DPVigilance/v1";
 
@@ -53,14 +53,24 @@ describe("proxy Météo-France", () => {
     expect(new Headers(init.headers).get("ApiKey")).toBe("cle-de-test");
   });
 
-  it("explique une clé refusée par Météo-France", async () => {
-    fetchMock.mockResolvedValueOnce(new Response('{"fault":{}}', { status: 403 }));
+  it("dit quand la passerelle d'API refuse, avec son code", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response('{"code":"900908","message":"Resource forbidden"}', { status: 403, headers: { "content-type": "application/json" } }),
+    );
     const response = await handler(new Request("https://site.test/api/meteofrance?path=cartevigilance/encours"));
     expect(response.status).toBe(403);
     const { error } = (await response.json()) as { error: string };
-    expect(error).toMatch(/refuse la clé/);
-    expect(error).toContain("11 caractères");
+    expect(error).toContain("clé de 11 caractères");
+    expect(error).toContain("passerelle d'API : 900908 — Resource forbidden");
     expect(error).not.toContain("cle-de-test");
+  });
+
+  it("dit quand un pare-feu refuse (page HTML)", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("<html><body><h1>Access Denied</h1></body></html>", { status: 403 }));
+    const response = await handler(new Request("https://site.test/api/meteofrance?path=cartevigilance/encours"));
+    const { error } = (await response.json()) as { error: string };
+    expect(error).toContain("pare-feu");
+    expect(error).toContain("Access Denied");
   });
 
   it("ne met pas une erreur de Météo-France en cache", async () => {

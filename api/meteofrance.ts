@@ -5,9 +5,12 @@
  * et n'est donc jamais envoyée au navigateur : le client appelle
  * /api/meteofrance/<endpoint>, cette fonction ajoute l'en-tête ApiKey et relaie
  * la réponse telle quelle (le corps est streamé).
+ *
+ * Runtime Node.js, région Paris (vercel.json) plutôt qu'Edge : une clé valide
+ * se voyait refuser en 403 depuis le réseau Edge, alors qu'elle passait
+ * depuis un poste en France. Un datacenter fixe à Paris donne une IP de
+ * sortie stable et proche de Météo-France.
  */
-
-export const config = { runtime: "edge" };
 
 const UPSTREAM_BASE = "https://public-api.meteofrance.fr/public/DPVigilance/v1";
 
@@ -21,11 +24,25 @@ function problem(status: number, message: string) {
   });
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== "GET") {
-    return problem(405, "Méthode non autorisée.");
+/**
+ * Résumé de la réponse de refus, pour savoir qui refuse : la passerelle d'API
+ * répond en JSON avec un code (900901 clé invalide, 900908 abonnement…), un
+ * pare-feu répond une page HTML. Ne contient jamais la clé.
+ */
+async function describeRefusal(upstream: Response) {
+  const text = (await upstream.text().catch(() => "")).trim();
+  try {
+    const body = JSON.parse(text) as { code?: unknown; message?: unknown; description?: unknown };
+    const parts = [body.code, body.message, body.description].filter((part) => typeof part === "string" || typeof part === "number");
+    if (parts.length) return `passerelle d'API : ${parts.join(" — ")}`;
+  } catch {
+    // Pas du JSON : page d'un pare-feu ou d'un CDN.
   }
+  const plain = text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+  return plain ? `réponse hors API (pare-feu ?) : « ${plain} »` : "réponse vide";
+}
 
+export async function GET(request: Request): Promise<Response> {
   // Des guillemets recopiés depuis un .env (METEOFRANCE_API_KEY="...") font
   // partie de la valeur sur Vercel : Météo-France refuserait alors la clé.
   const apiKey = process.env.METEOFRANCE_API_KEY?.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
@@ -51,11 +68,22 @@ export default async function handler(request: Request): Promise<Response> {
       headers: {
         ApiKey: apiKey,
         Accept: request.headers.get("accept") ?? "*/*",
+        "User-Agent": "appli-meteo (proxy Vercel)",
       },
       cache: "no-store",
     });
   } catch {
     return problem(502, "Météo-France est injoignable.");
+  }
+
+  // Refus : on dit qui refuse (passerelle ou pare-feu) et on donne la longueur
+  // de la clé reçue, à comparer avec celle du .env local. Ni l'une ni l'autre
+  // ne révèle la clé.
+  if (upstream.status === 401 || upstream.status === 403) {
+    return problem(
+      upstream.status,
+      `Météo-France refuse l'appel (${upstream.status}, clé de ${apiKey.length} caractères) — ${await describeRefusal(upstream)}.`,
+    );
   }
 
   // Les bulletins ne changent que quelques fois par jour : le CDN de Vercel
@@ -66,21 +94,7 @@ export default async function handler(request: Request): Promise<Response> {
   const cacheControl = upstream.ok ? "public, max-age=0, s-maxage=300, stale-while-revalidate=600" : "no-store";
   const headers = new Headers({ "cache-control": cacheControl });
   const contentType = upstream.headers.get("content-type");
-  const disposition = upstream.headers.get("content-disposition");
   if (contentType) headers.set("content-type", contentType);
-  if (disposition) headers.set("content-disposition", disposition);
-
-  // Clé refusée : la cause est presque toujours une valeur mal recopiée dans
-  // Vercel (clé tronquée — elle fait environ 1 500 caractères —, ancienne clé
-  // ou abonnement sans l'API Vigilance). La longueur seule ne révèle rien de
-  // la clé mais permet de la comparer à celle du .env local.
-  if (upstream.status === 401 || upstream.status === 403) {
-    return problem(
-      upstream.status,
-      `Météo-France refuse la clé configurée (${upstream.status}, ${apiKey.length} caractères reçus). ` +
-        "Vérifiez METEOFRANCE_API_KEY dans Vercel : clé complète, sans guillemets, abonnée à l'API DPVigilance, puis redéployez.",
-    );
-  }
 
   return new Response(upstream.body, { status: upstream.status, headers });
 }

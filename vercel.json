@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["cdg1"],
   "rewrites": [
     { "source": "/api/meteofrance/:path*", "destination": "/api/meteofrance?path=:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
