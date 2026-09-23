@@ -2,11 +2,16 @@ import type { ReactNode } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Sun, Map, SunMedium, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/stores/appStore";
+import { cityToParams } from "@/utils/cityUrl";
 import { useTheme } from "@/hooks/useTheme";
+import { useCityUrlSync } from "@/hooks/useCityUrlSync";
 
 function AppNavLink(props: { to: string; label: string; icon: ReactNode }) {
+  const activeCity = useAppStore((s) => s.activeCity);
+  const search = `?${new URLSearchParams(cityToParams(activeCity)).toString()}`;
   return (
-    <NavLink to={props.to} className={({ isActive }) => cn("segment flex-1 sm:flex-none", isActive && "segment-active")}>
+    <NavLink to={{ pathname: props.to, search }} className={({ isActive }) => cn("segment flex-1 sm:flex-none", isActive && "segment-active")}>
       <span className="opacity-80">{props.icon}</span>
       <span>{props.label}</span>
     </NavLink>
@@ -15,6 +20,8 @@ function AppNavLink(props: { to: string; label: string; icon: ReactNode }) {
 
 export default function AppShell() {
   const { isDark, toggleTheme } = useTheme();
+  // La ville active vit aussi dans l'URL : un lien copié rouvre la même ville.
+  useCityUrlSync();
 
   return (
     <div className="grainient-surface ambience-fade min-h-dvh text-slate-900 dark:text-zinc-50">

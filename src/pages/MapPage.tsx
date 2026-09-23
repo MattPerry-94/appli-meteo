@@ -82,7 +82,14 @@ export default function MapPage() {
   // bouton retour du navigateur revient à l'onglet précédent.
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab: TabId = searchParams.get("vue") === "vigilances" ? "vigilances" : "radar";
-  const setActiveTab = (tab: TabId) => setSearchParams(tab === "radar" ? {} : { vue: tab });
+  const setActiveTab = (tab: TabId) =>
+    setSearchParams((current) => {
+      // On ne touche qu'à « vue » : la ville de l'URL reste en place.
+      const next = new URLSearchParams(current);
+      if (tab === "radar") next.delete("vue");
+      else next.set("vue", tab);
+      return next;
+    });
   const [radarLayer, setRadarLayer] = useState<RadarLayerId>("rain");
 
   const vigilance = useVigilanceSnapshot();

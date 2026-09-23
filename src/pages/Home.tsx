@@ -20,6 +20,7 @@ import { Forecast7Days } from "@/components/Forecast7Days";
 import { ForecastChart48h } from "@/components/ForecastChart48h";
 import { ModelScoreCard } from "@/components/ModelScoreCard";
 import { FavoritesBar } from "@/components/FavoritesBar";
+import { ShareCityButton } from "@/components/ShareCityButton";
 import { AirQualityCard } from "@/components/AirQualityCard";
 import { SeaCard } from "@/components/SeaCard";
 import { Card } from "@/components/Card";
@@ -95,6 +96,7 @@ export default function Home() {
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Badge tone="zinc">{sourceLabel(citySource)}</Badge>
+              <ShareCityButton city={activeCity} />
               <button
                 type="button"
                 onClick={() => toggleFavorite(activeCity)}
