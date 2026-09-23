@@ -10,6 +10,7 @@ import { Badge } from "@/components/Badge";
 import { cn } from "@/lib/utils";
 import { formatTimeHHmm } from "@/utils/format";
 import { reverseGeocodeCity, searchCities, type OpenMeteoGeocodingResult } from "@/services/openMeteo";
+import { inferDepartmentCode } from "@/utils/department";
 import { fetchMeteoFranceDepartmentBulletin, type MeteoFranceDepartmentBulletin } from "@/services/meteoFranceVigilance";
 
 function toCity(x: OpenMeteoGeocodingResult): FavoriteCity {
@@ -17,6 +18,7 @@ function toCity(x: OpenMeteoGeocodingResult): FavoriteCity {
     id: x.id,
     name: x.name,
     adminArea: x.adminArea,
+    departmentCode: x.departmentCode,
     postalCode: x.postalCode,
     countryCode: x.countryCode,
     lat: x.lat,
@@ -28,25 +30,6 @@ function sourceLabel(source: CitySource) {
   if (source === "browser") return "Navigateur";
   if (source === "manual") return "Recherche";
   return "Par défaut";
-}
-
-function inferDepartmentCode(city: FavoriteCity) {
-  if (city.countryCode && city.countryCode !== "FR") return null;
-
-  const adminArea = city.adminArea?.trim().toUpperCase();
-  if (adminArea && /^(?:[0-9]{2,3}|2A|2B)$/i.test(adminArea)) {
-    return adminArea;
-  }
-
-  const postalCode = city.postalCode?.trim();
-  if (!postalCode) return null;
-
-  const digits = postalCode.replace(/\D/g, "");
-  if (digits.length < 2) return null;
-  if (digits.startsWith("97") || digits.startsWith("98")) {
-    return digits.slice(0, 3);
-  }
-  return digits.slice(0, 2);
 }
 
 function formatBulletinDate(value?: string) {

@@ -5,6 +5,8 @@ export type FavoriteCity = {
   id: string;
   name: string;
   adminArea?: string;
+  /** Code département (06, 2A, 974…), quand le géocodeur a permis de le déterminer. */
+  departmentCode?: string;
   postalCode?: string;
   countryCode?: string;
   lat: number;
@@ -32,7 +34,8 @@ type AppState = {
 const defaultCity: FavoriteCity = {
   id: "cagnes-sur-mer-06",
   name: "Cagnes-sur-Mer",
-  adminArea: "06",
+  adminArea: "Provence-Alpes-Côte d'Azur",
+  departmentCode: "06",
   postalCode: "06800",
   countryCode: "FR",
   lat: 43.6635,

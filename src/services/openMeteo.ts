@@ -1,5 +1,6 @@
 import type { FavoriteCity } from "@/stores/appStore";
 import { averageDefined, chooseRepresentativeWeatherCode, computeReliabilityLabel, type ReliabilityLabel } from "@/utils/forecastConsensus";
+import { departmentCodeFromName, departmentCodeFromPostalCode, isDepartmentCode } from "@/utils/department";
 
 export type ForecastSourceId = "arome" | "gfs" | "ecmwf";
 export type ForecastViewId = ForecastSourceId | "consensus";
@@ -8,6 +9,7 @@ export type OpenMeteoGeocodingResult = {
   id: string;
   name: string;
   adminArea?: string;
+  departmentCode?: string;
   postalCode?: string;
   countryCode?: string;
   lat: number;
@@ -422,9 +424,17 @@ export async function searchCities(query: string, options?: { signal?: AbortSign
       .map((item) => {
         const name = typeof item.name === "string" ? item.name : "";
         const admin1 = typeof item.admin1 === "string" ? item.admin1 : undefined;
+        const admin2 = typeof item.admin2 === "string" ? item.admin2 : undefined;
         const postcodes = Array.isArray(item.postcodes) ? (item.postcodes as unknown[]) : [];
         const postalCode = typeof postcodes[0] === "string" ? (postcodes[0] as string) : undefined;
         const countryCode = typeof item.country_code === "string" ? item.country_code : undefined;
+        // En France, admin2 est le département : c'est lui, et non le code
+        // postal souvent absent pour les petites communes, qui permet de
+        // retrouver le bulletin de vigilance.
+        const departmentCode =
+          countryCode?.toUpperCase() === "FR"
+            ? (departmentCodeFromName(admin2) ?? departmentCodeFromPostalCode(postalCode))
+            : undefined;
         const latitude = typeof item.latitude === "number" ? item.latitude : NaN;
         const longitude = typeof item.longitude === "number" ? item.longitude : NaN;
 
@@ -442,6 +452,7 @@ export async function searchCities(query: string, options?: { signal?: AbortSign
           lat: latitude,
           lon: longitude,
           ...(admin1 ? { adminArea: admin1 } : {}),
+          ...(departmentCode ? { departmentCode } : {}),
           ...(postalCode ? { postalCode } : {}),
           ...(countryCode ? { countryCode } : {}),
         };
@@ -484,6 +495,15 @@ export async function reverseGeocodeCity(latitude: number, longitude: number, op
     const adminArea = address.state ?? address.region ?? undefined;
     const postalCode = address.postcode;
     const countryCode = address.country_code?.toUpperCase();
+    // Nominatim expose le département en code ISO (« FR-06 », « FR-2A ») ; à
+    // défaut on retombe sur son nom (county), puis sur le code postal.
+    const isoDepartment = address["ISO3166-2-lvl6"]?.match(/^FR-(\w{2,3})$/)?.[1]?.toUpperCase();
+    const departmentCode =
+      countryCode === "FR"
+        ? ((isDepartmentCode(isoDepartment) ? isoDepartment : undefined) ??
+          departmentCodeFromName(address.county) ??
+          departmentCodeFromPostalCode(postalCode))
+        : undefined;
 
     return {
       id: `${name}-${adminArea ?? ""}-${countryCode ?? ""}-${latitude.toFixed(4)}-${longitude.toFixed(4)}`
@@ -494,6 +514,7 @@ export async function reverseGeocodeCity(latitude: number, longitude: number, op
       lat: latitude,
       lon: longitude,
       ...(adminArea ? { adminArea } : {}),
+      ...(departmentCode ? { departmentCode } : {}),
       ...(postalCode ? { postalCode } : {}),
       ...(countryCode ? { countryCode } : {}),
     } satisfies OpenMeteoGeocodingResult;

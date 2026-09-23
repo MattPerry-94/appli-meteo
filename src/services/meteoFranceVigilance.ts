@@ -1,3 +1,5 @@
+import { FRENCH_DEPARTMENT_NAMES } from "@/utils/department";
+
 export type VigilanceRiskId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type VigilanceLevelId = 1 | 2 | 3 | 4;
 
@@ -47,110 +49,6 @@ export type MeteoFranceDepartmentBulletin = {
   riskName?: string;
   updatedAtISO: string;
   sections: MeteoFranceBulletinSection[];
-};
-
-const FRENCH_DEPARTMENT_NAMES: Record<string, string> = {
-  "01": "Ain",
-  "02": "Aisne",
-  "03": "Allier",
-  "04": "Alpes-de-Haute-Provence",
-  "05": "Hautes-Alpes",
-  "06": "Alpes-Maritimes",
-  "07": "Ardèche",
-  "08": "Ardennes",
-  "09": "Ariège",
-  "10": "Aube",
-  "11": "Aude",
-  "12": "Aveyron",
-  "13": "Bouches-du-Rhône",
-  "14": "Calvados",
-  "15": "Cantal",
-  "16": "Charente",
-  "17": "Charente-Maritime",
-  "18": "Cher",
-  "19": "Corrèze",
-  "21": "Côte-d'Or",
-  "22": "Côtes-d'Armor",
-  "23": "Creuse",
-  "24": "Dordogne",
-  "25": "Doubs",
-  "26": "Drôme",
-  "27": "Eure",
-  "28": "Eure-et-Loir",
-  "29": "Finistère",
-  "2A": "Corse-du-Sud",
-  "2B": "Haute-Corse",
-  "30": "Gard",
-  "31": "Haute-Garonne",
-  "32": "Gers",
-  "33": "Gironde",
-  "34": "Hérault",
-  "35": "Ille-et-Vilaine",
-  "36": "Indre",
-  "37": "Indre-et-Loire",
-  "38": "Isère",
-  "39": "Jura",
-  "40": "Landes",
-  "41": "Loir-et-Cher",
-  "42": "Loire",
-  "43": "Haute-Loire",
-  "44": "Loire-Atlantique",
-  "45": "Loiret",
-  "46": "Lot",
-  "47": "Lot-et-Garonne",
-  "48": "Lozère",
-  "49": "Maine-et-Loire",
-  "50": "Manche",
-  "51": "Marne",
-  "52": "Haute-Marne",
-  "53": "Mayenne",
-  "54": "Meurthe-et-Moselle",
-  "55": "Meuse",
-  "56": "Morbihan",
-  "57": "Moselle",
-  "58": "Nièvre",
-  "59": "Nord",
-  "60": "Oise",
-  "61": "Orne",
-  "62": "Pas-de-Calais",
-  "63": "Puy-de-Dôme",
-  "64": "Pyrénées-Atlantiques",
-  "65": "Hautes-Pyrénées",
-  "66": "Pyrénées-Orientales",
-  "67": "Bas-Rhin",
-  "68": "Haut-Rhin",
-  "69": "Rhône",
-  "70": "Haute-Saône",
-  "71": "Saône-et-Loire",
-  "72": "Sarthe",
-  "73": "Savoie",
-  "74": "Haute-Savoie",
-  "75": "Paris",
-  "76": "Seine-Maritime",
-  "77": "Seine-et-Marne",
-  "78": "Yvelines",
-  "79": "Deux-Sèvres",
-  "80": "Somme",
-  "81": "Tarn",
-  "82": "Tarn-et-Garonne",
-  "83": "Var",
-  "84": "Vaucluse",
-  "85": "Vendée",
-  "86": "Vienne",
-  "87": "Haute-Vienne",
-  "88": "Vosges",
-  "89": "Yonne",
-  "90": "Territoire de Belfort",
-  "91": "Essonne",
-  "92": "Hauts-de-Seine",
-  "93": "Seine-Saint-Denis",
-  "94": "Val-de-Marne",
-  "95": "Val-d'Oise",
-  "971": "Guadeloupe",
-  "972": "Martinique",
-  "973": "Guyane",
-  "974": "La Réunion",
-  "976": "Mayotte",
 };
 
 // Le navigateur n'appelle jamais Meteo-France directement : la cle vit cote
@@ -244,19 +142,28 @@ function normalizeFreeText(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-function containsDepartmentCode(lines: string[], departmentCode: string) {
-  const escapedCode = departmentCode.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const matcher = new RegExp(`(?:\\(|\\b)${escapedCode}(?:\\)|\\b)`, "i");
-  return lines.some((line) => matcher.test(line));
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function containsDepartmentName(lines: string[], departmentCode: string) {
-  const departmentName = FRENCH_DEPARTMENT_NAMES[departmentCode];
-  if (!departmentName) return false;
+/**
+ * Les bulletins citent les départements sous la forme « Alpes-Maritimes (06) ».
+ * Seul le code entre parenthèses est recherché : un code nu confondrait « 06 »
+ * avec « 06:00 » ou « le 06 octobre ».
+ */
+function codeMatcher(departmentCode: string) {
+  return new RegExp(`\\(\\s*${escapeRegExp(departmentCode)}\\s*\\)`);
+}
 
-  const escapedName = departmentName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const matcher = new RegExp(`\\b${escapedName}\\b`, "i");
-  return lines.some((line) => matcher.test(line));
+/**
+ * Nom complet, sensible à la casse, et borné par autre chose qu'une lettre ou
+ * un trait d'union : « Nord » ne doit pas matcher « vent de nord » ni
+ * « Nord-Est », « Loire » ne doit pas matcher « Haute-Loire ».
+ */
+function nameMatcher(departmentCode: string) {
+  const name = FRENCH_DEPARTMENT_NAMES[departmentCode];
+  if (!name) return null;
+  return new RegExp(`(?<![\\p{L}'’-])${escapeRegExp(name)}(?![\\p{L}'’-])`, "u");
 }
 
 function parsePeriods(data: Record<string, unknown>): VigilancePeriod[] {
@@ -322,12 +229,118 @@ function parsePeriods(data: Record<string, unknown>): VigilancePeriod[] {
     .filter(Boolean) as VigilancePeriod[];
 }
 
+type BulletinCandidate = { bulletin: MeteoFranceDepartmentBulletin; searchLines: string[] };
+
+function parseBulletinCandidates(data: Record<string, unknown>): BulletinCandidate[] {
+  const product = typeof data.product === "object" && data.product ? (data.product as Record<string, unknown>) : null;
+  const updatedAtISO = typeof product?.update_time === "string" ? product.update_time : new Date().toISOString();
+  const textBlocItems = Array.isArray(product?.text_bloc_items) ? (product.text_bloc_items as unknown[]) : [];
+  const candidates: BulletinCandidate[] = [];
+
+  for (const bloc of textBlocItems) {
+    const blocObject = typeof bloc === "object" && bloc ? (bloc as Record<string, unknown>) : null;
+    if (!blocObject) continue;
+
+    const domainId = typeof blocObject.domain_id === "string" ? blocObject.domain_id : "";
+    if (!domainId || domainId === "FRA") continue;
+
+    const blocTitle = typeof blocObject.bloc_title === "string" ? blocObject.bloc_title : "Bulletin vigilance";
+    const domainName = typeof blocObject.domain_name === "string" ? blocObject.domain_name : "Zone";
+    const blocItems = Array.isArray(blocObject.bloc_items) ? (blocObject.bloc_items as unknown[]) : [];
+
+    for (const blocItem of blocItems) {
+      const blocItemObject = typeof blocItem === "object" && blocItem ? (blocItem as Record<string, unknown>) : null;
+      if (!blocItemObject) continue;
+
+      const typeName = typeof blocItemObject.type_name === "string" ? blocItemObject.type_name : "Suivi de vigilance";
+      const textItems = Array.isArray(blocItemObject.text_items) ? (blocItemObject.text_items as unknown[]) : [];
+
+      for (const textItem of textItems) {
+        const textItemObject = typeof textItem === "object" && textItem ? (textItem as Record<string, unknown>) : null;
+        if (!textItemObject) continue;
+
+        const hazardName = typeof textItemObject.hazard_name === "string" ? textItemObject.hazard_name : undefined;
+        const termItems = Array.isArray(textItemObject.term_items) ? (textItemObject.term_items as unknown[]) : [];
+
+        for (const term of termItems) {
+          const termObject = typeof term === "object" && term ? (term as Record<string, unknown>) : null;
+          if (!termObject) continue;
+
+          const subdivisionText = Array.isArray(termObject.subdivision_text) ? (termObject.subdivision_text as unknown[]) : [];
+          const sections: MeteoFranceBulletinSection[] = subdivisionText
+            .map((entry) => {
+              const sectionObject = typeof entry === "object" && entry ? (entry as Record<string, unknown>) : null;
+              if (!sectionObject) return null;
+
+              const titleParts = [sectionObject.bold_text, sectionObject.underline_text].filter(
+                (part): part is string => typeof part === "string" && part.trim().length > 0,
+              );
+              const textLines = Array.isArray(sectionObject.text) ? (sectionObject.text as unknown[]) : [];
+              const lines = textLines
+                .filter((line): line is string => typeof line === "string")
+                .map((line) => normalizeFreeText(line))
+                .filter(Boolean);
+
+              if (!titleParts.length && !lines.length) return null;
+
+              return {
+                title: titleParts.length ? normalizeFreeText(titleParts.join(" ")) : undefined,
+                lines,
+              } satisfies MeteoFranceBulletinSection;
+            })
+            .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+          candidates.push({
+            bulletin: {
+              domainId,
+              domainName,
+              blocTitle,
+              typeName,
+              hazardName,
+              termName: typeof termObject.term_names === "string" ? termObject.term_names : undefined,
+              startISO: typeof termObject.start_time === "string" ? termObject.start_time : undefined,
+              endISO: typeof termObject.end_time === "string" ? termObject.end_time : undefined,
+              riskName: typeof termObject.risk_name === "string" ? termObject.risk_name : undefined,
+              updatedAtISO,
+              sections,
+            },
+            searchLines: sections.flatMap((section) => [section.title ?? "", ...section.lines]),
+          });
+        }
+      }
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Cherche dans la réponse de textesvigilance/encours le bulletin qui concerne
+ * le département. Deux passes : d'abord le code « (06) », qui est non ambigu ;
+ * le nom seul n'est tenté qu'ensuite, car beaucoup de départements portent le
+ * nom d'une rivière (Loire, Rhône, Marne…) que les bulletins de crue citent.
+ */
+export function findDepartmentBulletin(data: Record<string, unknown>, departmentCode: string): MeteoFranceDepartmentBulletin | null {
+  const code = departmentCode.trim().toUpperCase();
+  if (!code) return null;
+
+  const candidates = parseBulletinCandidates(data);
+  const byName = nameMatcher(code);
+  const matchers = [codeMatcher(code), ...(byName ? [byName] : [])];
+
+  for (const matcher of matchers) {
+    const found = candidates.find((candidate) => candidate.searchLines.some((line) => matcher.test(line)));
+    if (found) return found.bulletin;
+  }
+
+  return null;
+}
+
 export async function fetchMeteoFranceDepartmentBulletin(
   departmentCode: string,
   options?: { signal?: AbortSignal },
 ): Promise<MeteoFranceDepartmentBulletin | null> {
-  const normalizedDepartmentCode = departmentCode.trim().toUpperCase();
-  if (!normalizedDepartmentCode) return null;
+  if (!departmentCode.trim()) return null;
 
   const { signal, cancel } = withTimeout(16000, options?.signal);
 
@@ -345,88 +358,7 @@ export async function fetchMeteoFranceDepartmentBulletin(
     }
 
     const data = (await response.json()) as Record<string, unknown>;
-    const product = typeof data.product === "object" && data.product ? (data.product as Record<string, unknown>) : null;
-    const updatedAtISO = typeof product?.update_time === "string" ? product.update_time : new Date().toISOString();
-    const textBlocItems = Array.isArray(product?.text_bloc_items) ? (product.text_bloc_items as unknown[]) : [];
-
-    for (const bloc of textBlocItems) {
-      const blocObject = typeof bloc === "object" && bloc ? (bloc as Record<string, unknown>) : null;
-      if (!blocObject) continue;
-
-      const domainId = typeof blocObject.domain_id === "string" ? blocObject.domain_id : "";
-      if (!domainId || domainId === "FRA") continue;
-
-      const blocTitle = typeof blocObject.bloc_title === "string" ? blocObject.bloc_title : "Bulletin vigilance";
-      const domainName = typeof blocObject.domain_name === "string" ? blocObject.domain_name : "Zone";
-      const blocItems = Array.isArray(blocObject.bloc_items) ? (blocObject.bloc_items as unknown[]) : [];
-
-      for (const blocItem of blocItems) {
-        const blocItemObject = typeof blocItem === "object" && blocItem ? (blocItem as Record<string, unknown>) : null;
-        if (!blocItemObject) continue;
-
-        const typeName = typeof blocItemObject.type_name === "string" ? blocItemObject.type_name : "Suivi de vigilance";
-        const textItems = Array.isArray(blocItemObject.text_items) ? (blocItemObject.text_items as unknown[]) : [];
-
-        for (const textItem of textItems) {
-          const textItemObject = typeof textItem === "object" && textItem ? (textItem as Record<string, unknown>) : null;
-          if (!textItemObject) continue;
-
-          const hazardName = typeof textItemObject.hazard_name === "string" ? textItemObject.hazard_name : undefined;
-          const termItems = Array.isArray(textItemObject.term_items) ? (textItemObject.term_items as unknown[]) : [];
-
-          for (const term of termItems) {
-            const termObject = typeof term === "object" && term ? (term as Record<string, unknown>) : null;
-            if (!termObject) continue;
-
-            const subdivisionText = Array.isArray(termObject.subdivision_text) ? (termObject.subdivision_text as unknown[]) : [];
-            const sections: MeteoFranceBulletinSection[] = subdivisionText
-              .map((entry) => {
-                const sectionObject = typeof entry === "object" && entry ? (entry as Record<string, unknown>) : null;
-                if (!sectionObject) return null;
-
-                const titleParts = [sectionObject.bold_text, sectionObject.underline_text].filter(
-                  (part): part is string => typeof part === "string" && part.trim().length > 0,
-                );
-                const textLines = Array.isArray(sectionObject.text) ? (sectionObject.text as unknown[]) : [];
-                const lines = textLines
-                  .filter((line): line is string => typeof line === "string")
-                  .map((line) => normalizeFreeText(line))
-                  .filter(Boolean);
-
-                if (!titleParts.length && !lines.length) return null;
-
-                return {
-                  title: titleParts.length ? normalizeFreeText(titleParts.join(" ")) : undefined,
-                  lines,
-                } satisfies MeteoFranceBulletinSection;
-              })
-              .filter((item): item is NonNullable<typeof item> => Boolean(item));
-
-            const sectionLines = sections.flatMap((section) => section.lines);
-
-            if (!containsDepartmentCode(sectionLines, normalizedDepartmentCode) && !containsDepartmentName(sectionLines, normalizedDepartmentCode)) {
-              continue;
-            }
-
-            return {
-              domainId,
-              domainName,
-              blocTitle,
-              typeName,
-              hazardName,
-              termName: typeof termObject.term_names === "string" ? termObject.term_names : undefined,
-              startISO: typeof termObject.start_time === "string" ? termObject.start_time : undefined,
-              endISO: typeof termObject.end_time === "string" ? termObject.end_time : undefined,
-              riskName: typeof termObject.risk_name === "string" ? termObject.risk_name : undefined,
-              updatedAtISO,
-              sections,
-            } satisfies MeteoFranceDepartmentBulletin;
-          }
-        }
-      }
-    }
-
-    return null;
+    return findDepartmentBulletin(data, departmentCode);
   } finally {
     cancel();
   }
