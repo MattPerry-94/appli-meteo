@@ -4,7 +4,7 @@ import { WeatherIcon } from "@/components/WeatherIcon";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import type { CityForecastBundle } from "@/services/openMeteo";
-import { formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
+import { formatSpreadC, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
 
 export function CityCard(props: { bundle: CityForecastBundle | null; selected?: boolean; onSelect?: () => void }) {
@@ -50,6 +50,14 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
             <div className="display temp-gradient numeric text-5xl">
               {formatTempC(current?.tempC)}
             </div>
+            {formatSpreadC(current?.tempSpreadC) ? (
+              <div
+                className="numeric mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400"
+                title="Écart entre les modèles AROME, GFS et ECMWF"
+              >
+                {formatSpreadC(current?.tempSpreadC)} selon les modèles
+              </div>
+            ) : null}
             <div className="numeric mt-1.5 text-xs text-slate-500 dark:text-zinc-400">
               <span className="font-semibold text-slate-700 dark:text-zinc-200">{formatTempC(today?.tempMinC)}</span>
               <span className="px-1 text-slate-300 dark:text-zinc-600">→</span>

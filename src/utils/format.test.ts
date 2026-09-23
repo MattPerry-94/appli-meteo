@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMm, formatTempC, formatUv } from "@/utils/format";
+import { formatMm, formatSpreadC, formatTempC, formatUv } from "@/utils/format";
 
 describe("format", () => {
   it("formatTempC arrondit et ajoute le symbole", () => {
@@ -20,6 +20,12 @@ describe("format", () => {
     expect(formatMm(12)).toBe("12 mm");
     expect(formatMm(0.04)).toBe("0 mm");
     expect(formatMm(undefined)).toBe("—");
+  });
+  it("formatSpreadC arrondit au demi-degré et se tait sous 0,5°", () => {
+    expect(formatSpreadC(1.4)).toBe("±1,5°");
+    expect(formatSpreadC(2)).toBe("±2°");
+    expect(formatSpreadC(0.2)).toBe("");
+    expect(formatSpreadC(undefined)).toBe("");
   });
 });
 

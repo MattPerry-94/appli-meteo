@@ -1,5 +1,12 @@
 import type { FavoriteCity } from "@/stores/appStore";
-import { averageDefined, chooseRepresentativeWeatherCode, computeReliabilityLabel, type ReliabilityLabel } from "@/utils/forecastConsensus";
+import {
+  averageDefined,
+  chooseRepresentativeWeatherCode,
+  computeReliabilityLabel,
+  halfSpread,
+  rangeOf,
+  type ReliabilityLabel,
+} from "@/utils/forecastConsensus";
 import { departmentCodeFromName, departmentCodeFromPostalCode, isDepartmentCode } from "@/utils/department";
 
 export type ForecastSourceId = "arome" | "gfs" | "ecmwf";
@@ -19,6 +26,8 @@ export type OpenMeteoGeocodingResult = {
 export type CurrentWeather = {
   /** Optionnel : une valeur absente doit rester absente, pas retomber sur 0 °C. */
   tempC?: number;
+  /** Consensus seulement : demi-écart de température entre modèles. */
+  tempSpreadC?: number;
   apparentTempC?: number;
   windKph?: number;
   windGustKph?: number;
@@ -34,6 +43,10 @@ export type DailyForecast = {
   dateISO: string;
   tempMinC?: number;
   tempMaxC?: number;
+  /** Consensus seulement : demi-écarts entre modèles, et fourchette de pluie. */
+  tempMinSpreadC?: number;
+  tempMaxSpreadC?: number;
+  precipProbabilityRange?: [number, number];
   apparentTempMinC?: number;
   apparentTempMaxC?: number;
   precipProbabilityPct?: number;
@@ -53,6 +66,8 @@ export type DailyForecast = {
 export type HourlyForecastPoint = {
   timeISO: string;
   tempC?: number;
+  /** Consensus seulement : demi-écart de température entre modèles. */
+  tempSpreadC?: number;
   apparentTempC?: number;
   precipProbabilityPct?: number;
   precipMm?: number;
@@ -383,6 +398,7 @@ function buildConsensusCurrent(city: FavoriteCity, models: Record<ForecastSource
 
   return {
     tempC: averageDefined(entries.map((entry) => entry.current?.tempC)),
+    tempSpreadC: halfSpread(entries.map((entry) => entry.current?.tempC)),
     apparentTempC: averageDefined(entries.map((entry) => entry.current?.apparentTempC)),
     windKph: averageDefined(entries.map((entry) => entry.current?.windKph)),
     windGustKph: averageDefined(entries.map((entry) => entry.current?.windGustKph)),
@@ -414,6 +430,9 @@ function buildConsensusDaily(models: Record<ForecastSourceId, CityForecastBundle
       dateISO,
       tempMinC: averageDefined(entries.map((entry) => entry.day.tempMinC)),
       tempMaxC: averageDefined(entries.map((entry) => entry.day.tempMaxC)),
+      tempMinSpreadC: halfSpread(entries.map((entry) => entry.day.tempMinC)),
+      tempMaxSpreadC: halfSpread(entries.map((entry) => entry.day.tempMaxC)),
+      precipProbabilityRange: rangeOf(entries.map((entry) => entry.day.precipProbabilityPct)),
       apparentTempMinC: averageDefined(entries.map((entry) => entry.day.apparentTempMinC)),
       apparentTempMaxC: averageDefined(entries.map((entry) => entry.day.apparentTempMaxC)),
       precipProbabilityPct: averageDefined(entries.map((entry) => entry.day.precipProbabilityPct)),
@@ -453,6 +472,7 @@ function buildConsensusHourly(models: Record<ForecastSourceId, CityForecastBundl
     return {
       timeISO,
       tempC: averageDefined(entries.map((entry) => entry.point.tempC)),
+      tempSpreadC: halfSpread(entries.map((entry) => entry.point.tempC)),
       apparentTempC: averageDefined(entries.map((entry) => entry.point.apparentTempC)),
       precipProbabilityPct: averageDefined(entries.map((entry) => entry.point.precipProbabilityPct)),
       precipMm: averageDefined(entries.map((entry) => entry.point.precipMm)),

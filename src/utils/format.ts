@@ -3,6 +3,17 @@ export function formatTempC(value: number | undefined) {
   return `${Math.round(value)}°`;
 }
 
+/**
+ * Écart entre modèles, arrondi au demi-degré : « ±1,5° ». Vide sous 0,5° :
+ * un accord à quelques dixièmes près n'apporte rien à l'affichage.
+ */
+export function formatSpreadC(value: number | undefined) {
+  if (value === undefined || Number.isNaN(value)) return "";
+  const rounded = Math.round(value * 2) / 2;
+  if (rounded < 0.5) return "";
+  return `±${rounded.toString().replace(".", ",")}°`;
+}
+
 export function formatPercent(value: number | undefined) {
   if (value === undefined || Number.isNaN(value)) return "—";
   return `${Math.round(value)}%`;

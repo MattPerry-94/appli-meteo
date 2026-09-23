@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseRepresentativeWeatherCode, computeReliabilityLabel } from "@/utils/forecastConsensus";
+import { chooseRepresentativeWeatherCode, computeReliabilityLabel, halfSpread, rangeOf } from "@/utils/forecastConsensus";
 
 describe("forecastConsensus", () => {
   it("retourne ultra fiable quand les 3 modèles convergent", () => {
@@ -34,5 +34,21 @@ describe("forecastConsensus", () => {
   it("choisit un code météo représentatif", () => {
     expect(chooseRepresentativeWeatherCode([61, 63, 2])).toBe(61);
     expect(chooseRepresentativeWeatherCode([undefined, 95, 96])).toBe(95);
+  });
+});
+
+describe("écart entre modèles", () => {
+  it("halfSpread donne le demi-écart entre extrêmes", () => {
+    expect(halfSpread([22, 25, 23])).toBe(1.5);
+    expect(halfSpread([22, undefined, 22])).toBe(0);
+  });
+
+  it("ne dit rien avec un seul modèle", () => {
+    expect(halfSpread([22, undefined])).toBeUndefined();
+    expect(rangeOf([40])).toBeUndefined();
+  });
+
+  it("rangeOf donne la fourchette", () => {
+    expect(rangeOf([10, 60, 30])).toEqual([10, 60]);
   });
 });

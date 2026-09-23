@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { WeatherIcon } from "@/components/WeatherIcon";
 import type { CityForecastBundle, HourlyForecastPoint } from "@/services/openMeteo";
-import { formatMm, formatPercent, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
+import { formatMm, formatPercent, formatSpreadC, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
 
 function pointsForDay(points: HourlyForecastPoint[], dateISO: string) {
@@ -42,7 +42,12 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
                 <WeatherIcon kind={v.kind} className="accent-ink" />
                 <div className="min-w-0">
                   <div className="numeric flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
-                    <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">{formatTempC(p.tempC)}</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">
+                      {formatTempC(p.tempC)}
+                      {props.showReliability && formatSpreadC(p.tempSpreadC) ? (
+                        <span className="ml-1 text-xs font-medium text-slate-400 dark:text-zinc-500">{formatSpreadC(p.tempSpreadC)}</span>
+                      ) : null}
+                    </span>
                     {p.apparentTempC !== undefined ? <span>ressenti {formatTempC(p.apparentTempC)}</span> : null}
                     <span>
                       Pluie {formatPercent(p.precipProbabilityPct)}

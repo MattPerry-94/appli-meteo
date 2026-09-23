@@ -169,3 +169,21 @@ export function averageDefined(values: Array<number | undefined>) {
   if (!defined.length) return undefined;
   return defined.reduce((sum, value) => sum + value, 0) / defined.length;
 }
+
+/**
+ * Demi-écart entre le modèle le plus haut et le plus bas : « 24° ±1,5° »
+ * signifie que les modèles vont de 22,5° à 25,5°. undefined sous deux valeurs,
+ * un seul modèle ne disant rien de l'incertitude.
+ */
+export function halfSpread(values: Array<number | undefined>) {
+  const defined = values.filter((value): value is number => typeof value === "number");
+  if (defined.length < 2) return undefined;
+  return (Math.max(...defined) - Math.min(...defined)) / 2;
+}
+
+/** Plus petite et plus grande valeur des modèles, ou undefined sous deux valeurs. */
+export function rangeOf(values: Array<number | undefined>): [number, number] | undefined {
+  const defined = values.filter((value): value is number => typeof value === "number");
+  if (defined.length < 2) return undefined;
+  return [Math.min(...defined), Math.max(...defined)];
+}

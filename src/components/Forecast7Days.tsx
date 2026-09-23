@@ -12,6 +12,7 @@ import {
   formatDayShort,
   formatMm,
   formatPercent,
+  formatSpreadC,
   formatTempC,
   formatTimeHHmmFromISODateTime,
   formatUv,
@@ -122,6 +123,11 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                       <span className="font-semibold text-slate-700 dark:text-zinc-300">
                         {formatTempC(day.tempMinC)} <span className="font-normal text-slate-300 dark:text-zinc-600">→</span>{" "}
                         {formatTempC(day.tempMaxC)}
+                        {activeView === "consensus" && formatSpreadC(day.tempMaxSpreadC) ? (
+                          <span className="ml-1 font-normal text-slate-400 dark:text-zinc-500" title="Écart entre modèles sur le maximum">
+                            {formatSpreadC(day.tempMaxSpreadC)}
+                          </span>
+                        ) : null}
                       </span>
                       <span className="text-slate-300 dark:text-zinc-700">•</span>
                       <span>
@@ -186,6 +192,11 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                 {formatTempC(active?.tempMinC)} <span className="font-normal text-slate-300 dark:text-zinc-600">→</span>{" "}
                 {formatTempC(active?.tempMaxC)}
               </div>
+              {activeView === "consensus" && (formatSpreadC(active?.tempMinSpreadC) || formatSpreadC(active?.tempMaxSpreadC)) ? (
+                <div className="numeric mt-0.5 text-xs text-slate-500 dark:text-zinc-400" title="Écart entre les modèles">
+                  Écart {formatSpreadC(active?.tempMinSpreadC) || "±0°"} / {formatSpreadC(active?.tempMaxSpreadC) || "±0°"}
+                </div>
+              ) : null}
             </div>
 
             <div className="tile rounded-2xl p-3.5">
@@ -211,7 +222,13 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
               <div className="numeric mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
                 {active?.precipProbabilityPct === undefined ? missingModelText : formatPercent(active.precipProbabilityPct)}
               </div>
-              <div className="numeric mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Cumul {formatMm(active?.precipSumMm)}</div>
+              <div className="numeric mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+                Cumul {formatMm(active?.precipSumMm)}
+                {activeView === "consensus" && active?.precipProbabilityRange &&
+                active.precipProbabilityRange[1] - active.precipProbabilityRange[0] >= 10
+                  ? ` · ${Math.round(active.precipProbabilityRange[0])} à ${formatPercent(active.precipProbabilityRange[1])} selon les modèles`
+                  : ""}
+              </div>
             </div>
             <div className="tile rounded-2xl p-3.5">
               <div className="eyebrow">Vent (max)</div>
