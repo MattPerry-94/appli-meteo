@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Cloud, CloudRain, RefreshCcw, ShieldAlert, Zap } from "lucide-react";
+import { Cloud, CloudRain, RefreshCcw, ShieldAlert, Zap } from "lucide-react";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
+import { Notice } from "@/components/Notice";
 import { cn } from "@/lib/utils";
 import { fetchMeteoFranceNationalCardDocument } from "@/services/meteoFranceVigilance";
 import { useAppStore } from "@/stores/appStore";
@@ -330,10 +331,7 @@ export default function MapPage() {
                   {activeCity.lon.toFixed(4).replace(".", ",")}
                 </div>
 
-                <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/25 bg-amber-400/10 p-3.5 text-amber-900 dark:border-amber-300/20 dark:text-amber-100">
-                  <AlertTriangle className="size-4 shrink-0" />
-                  <span>La timeline et les heures de prévision se pilotent directement dans la carte.</span>
-                </div>
+                <Notice tone="warning">La timeline et les heures de prévision se pilotent directement dans la carte.</Notice>
               </div>
             </Card>
           </div>
@@ -374,12 +372,7 @@ export default function MapPage() {
               </div>
             ) : null}
 
-            {vigilanceError ? (
-              <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-3.5 text-sm text-rose-800 dark:border-rose-300/20 dark:text-rose-100">
-                <AlertTriangle className="size-4 shrink-0" />
-                <span>{vigilanceError}</span>
-              </div>
-            ) : null}
+            {vigilanceError ? <Notice className="mt-4">{vigilanceError}</Notice> : null}
           </Card>
 
           <Card className="overflow-hidden p-2">

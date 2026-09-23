@@ -1,20 +1,10 @@
-import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WeatherIcon } from "@/components/WeatherIcon";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import type { CityForecastBundle } from "@/services/openMeteo";
 import { formatTempC, formatUv } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
-
-function KindIcon(props: { kind: ReturnType<typeof getOpenMeteoVisual>["kind"] }) {
-  const className = "size-4";
-  if (props.kind === "clear") return <Sun className={className} />;
-  if (props.kind === "rain") return <CloudRain className={className} />;
-  if (props.kind === "snow") return <CloudSnow className={className} />;
-  if (props.kind === "storm") return <CloudLightning className={className} />;
-  if (props.kind === "fog") return <CloudFog className={className} />;
-  return <Cloud className={className} />;
-}
 
 export function CityCard(props: { bundle: CityForecastBundle | null; selected?: boolean; onSelect?: () => void }) {
   // Sans onSelect la carte n'est pas interactive : la rendre en <button>
@@ -45,7 +35,7 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
             <div className="break-words text-base font-semibold text-slate-900 dark:text-white">{city?.name ?? "—"}</div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
               <span className="accent-ink inline-flex items-center gap-1.5 font-medium">
-                <KindIcon kind={visual.kind} />
+                <WeatherIcon kind={visual.kind} />
                 <span className="truncate">{visual.label}</span>
               </span>
               {city?.postalCode ? <span className="text-slate-300 dark:text-zinc-600">•</span> : null}

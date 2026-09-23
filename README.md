@@ -64,12 +64,15 @@ statique et Vercel route `/api/*` vers la fonction.
 
 ```
 src/
-  components/   Card, Badge, CityCard, Forecast7Days, HourlyDetails, AppShell
+  components/   Card, Badge, Notice, WeatherIcon, CityCard, CitySearchCard,
+                BulletinCard, PreventionCard, Forecast7Days, HourlyDetails, AppShell
   pages/        Home (prévisions + recherche), MapPage (radar + vigilances)
   services/     openMeteo.ts (prévisions, géocodage), meteoFranceVigilance.ts
-  utils/        forecastConsensus.ts (moyennes + fiabilité), format, weather
+  utils/        forecastConsensus.ts (moyennes + fiabilité), department.ts
+                (code département d'une ville), format, weather
   stores/       appStore.ts (ville active, persistée via zustand/persist)
-  hooks/        useForecastBundles (fetch + rafraîchissement), useTheme
+  hooks/        useForecastBundles, useDepartmentBulletin (fetch + rafraîchissement),
+                useCitySearch, useGeolocatedCity, useTheme, useAmbience
 api/
   meteofrance/  Proxy serveur détenant la clé Météo-France
 ```

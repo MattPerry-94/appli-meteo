@@ -13,22 +13,15 @@ export type FavoriteCity = {
   lon: number;
 };
 
-export type WeatherProvider = "open-meteo" | "meteofrance";
 export type CitySource = "default" | "browser" | "manual";
-
-export type Settings = {
-  provider: WeatherProvider;
-};
 
 type AppState = {
   activeCity: FavoriteCity;
   citySource: CitySource;
   hasAttemptedBrowserLocation: boolean;
-  settings: Settings;
   setActiveCity: (city: FavoriteCity, source?: CitySource) => void;
   markBrowserLocationAttempted: () => void;
   resetActiveCity: () => void;
-  setProvider: (provider: WeatherProvider) => void;
 };
 
 const defaultCity: FavoriteCity = {
@@ -48,19 +41,15 @@ export const useAppStore = create<AppState>()(
       activeCity: defaultCity,
       citySource: "default",
       hasAttemptedBrowserLocation: false,
-      settings: {
-        provider: "open-meteo",
-      },
       setActiveCity: (city, source = "manual") => set({ activeCity: city, citySource: source }),
       markBrowserLocationAttempted: () => set({ hasAttemptedBrowserLocation: true }),
       resetActiveCity: () => set({ activeCity: defaultCity, citySource: "default", hasAttemptedBrowserLocation: false }),
-      setProvider: (provider) => set((state) => ({ settings: { ...state.settings, provider } })),
     }),
     {
       name: "meteo:state",
-      version: 3,
+      version: 4,
       migrate: (persistedState) => {
-        const state = persistedState as Partial<AppState> & { favorites?: FavoriteCity[]; settings?: Partial<Settings> };
+        const state = persistedState as Partial<AppState> & { favorites?: FavoriteCity[] };
 
         const migratedCity =
           state.activeCity ??
@@ -71,9 +60,6 @@ export const useAppStore = create<AppState>()(
           activeCity: migratedCity,
           citySource: state.citySource ?? "default",
           hasAttemptedBrowserLocation: state.hasAttemptedBrowserLocation ?? false,
-          settings: {
-            provider: state.settings?.provider ?? "open-meteo",
-          },
         };
       },
     },

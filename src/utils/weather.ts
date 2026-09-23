@@ -45,7 +45,7 @@ export function getUvLevel(value: number | undefined) {
 export type TempBand = "cool" | "warm" | "hot";
 
 /**
- * Ambiance chromatique du site, pilotee par la temperature ressentie :
+ * Ambiance chromatique du site, pilotee par la temperature (a 2 m) :
  *  - cool (< 16 C)  : bleus et blancs, teintes claires
  *  - warm (16-25 C) : orange et jaune
  *  - hot  (> 25 C)  : rouges

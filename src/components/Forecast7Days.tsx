@@ -1,6 +1,7 @@
-import { ChevronDown, Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, Sun } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { WeatherIcon } from "@/components/WeatherIcon";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { HourlyDetails } from "@/components/HourlyDetails";
@@ -8,16 +9,6 @@ import type { CityForecastModelSet, ForecastSourceId, ForecastViewId } from "@/s
 import { getForecastViewLabel } from "@/services/openMeteo";
 import { formatDayLong, formatDayShort, formatPercent, formatTempC, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
-
-function KindIcon(props: { kind: ReturnType<typeof getOpenMeteoVisual>["kind"]; className?: string }) {
-  const className = cn("size-4", props.className);
-  if (props.kind === "clear") return <Sun className={className} />;
-  if (props.kind === "rain") return <CloudRain className={className} />;
-  if (props.kind === "snow") return <CloudSnow className={className} />;
-  if (props.kind === "storm") return <CloudLightning className={className} />;
-  if (props.kind === "fog") return <CloudFog className={className} />;
-  return <Cloud className={className} />;
-}
 
 const views: ForecastViewId[] = ["consensus", "arome", "gfs", "ecmwf"];
 const comparisonViews: ForecastSourceId[] = ["arome", "gfs", "ecmwf"];
@@ -112,7 +103,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
 
                   <div className="eyebrow">{formatDayShort(day.dateISO)}</div>
 
-                  <KindIcon kind={dayVisual.kind} className="accent-ink" />
+                  <WeatherIcon kind={dayVisual.kind} className="accent-ink" />
 
                   <div className="min-w-0">
                     <div className="break-words text-sm font-semibold text-slate-800 dark:text-zinc-100">
@@ -237,7 +228,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
           <div className="tile rounded-2xl p-3.5">
             <div className="eyebrow">Résumé</div>
             <div className="mt-1.5 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-zinc-50">
-              <KindIcon kind={visual.kind} className="accent-ink" />
+              <WeatherIcon kind={visual.kind} className="accent-ink" />
               <span>{visual.label}</span>
             </div>
           </div>
@@ -254,7 +245,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                       className="tile tile-interactive grid grid-cols-[80px_22px_1fr] items-center gap-3 rounded-xl px-3 py-2.5"
                     >
                       <div className="text-xs font-bold text-slate-700 dark:text-zinc-200">{item.label}</div>
-                      <KindIcon kind={itemVisual.kind} className="accent-ink" />
+                      <WeatherIcon kind={itemVisual.kind} className="accent-ink" />
                       <div className="numeric text-xs text-slate-500 dark:text-zinc-400">
                         {item.day ? (
                           <>

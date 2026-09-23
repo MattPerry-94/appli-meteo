@@ -1,19 +1,8 @@
-import { Cloud, CloudFog, CloudLightning, CloudRain, CloudSnow, Sun } from "lucide-react";
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { WeatherIcon } from "@/components/WeatherIcon";
 import type { CityForecastBundle, HourlyForecastPoint } from "@/services/openMeteo";
 import { formatPercent, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
-
-function KindIcon(props: { kind: ReturnType<typeof getOpenMeteoVisual>["kind"]; className?: string }) {
-  const className = cn("size-4", props.className);
-  if (props.kind === "clear") return <Sun className={className} />;
-  if (props.kind === "rain") return <CloudRain className={className} />;
-  if (props.kind === "snow") return <CloudSnow className={className} />;
-  if (props.kind === "storm") return <CloudLightning className={className} />;
-  if (props.kind === "fog") return <CloudFog className={className} />;
-  return <Cloud className={className} />;
-}
 
 function pointsForDay(points: HourlyForecastPoint[], dateISO: string) {
   const prefix = `${dateISO}T`;
@@ -50,7 +39,7 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
                 <div className="numeric text-xs font-bold text-slate-700 dark:text-zinc-200">
                   {formatTimeHHmmFromISODateTime(p.timeISO)}
                 </div>
-                <KindIcon kind={v.kind} className="accent-ink" />
+                <WeatherIcon kind={v.kind} className="accent-ink" />
                 <div className="min-w-0">
                   <div className="numeric flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
                     <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">{formatTempC(p.tempC)}</span>
