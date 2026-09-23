@@ -9,6 +9,16 @@ bulletins de vigilance Météo-France pour la ville active.
   d'accord entre eux.
 - **Prévisions à 7 jours** détaillées heure par heure, consultables modèle par
   modèle ou en consensus.
+- **Consensus pondéré** — AROME compte double sur 48 h, ECMWF un peu plus que
+  GFS ; l'écart entre modèles est affiché en degrés (« 24° ±1° »).
+- **Graphique des 48 h** — courbe du consensus, bande de dispersion des modèles
+  et probabilité de pluie, avec détail modèle par modèle au survol.
+- **Pluie dans l'heure** — au quart d'heure (AROME en France).
+- **Score des modèles** — écart moyen de chaque modèle à J+1 sur une semaine,
+  comparé à la réanalyse ERA5.
+- **Favoris** — jusqu'à 8 villes, avec un aperçu météo de chacune.
+- **Air, pollens et mer** — indice européen de qualité de l'air, pollens (CAMS,
+  Europe), vagues et température de l'eau sur la côte.
 - **Vigilance Météo-France** — couleur de vigilance et bulletin du département
   de la ville active, et carte de France interactive des vigilances
   (aujourd'hui / demain, filtrable par risque).

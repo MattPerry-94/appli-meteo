@@ -8,6 +8,7 @@ import { useVigilanceSnapshot } from "@/hooks/useVigilanceSnapshot";
 import { useNextHourRain } from "@/hooks/useNextHourRain";
 import { useModelScores } from "@/hooks/useModelScores";
 import { useCityBriefs } from "@/hooks/useCityBriefs";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { toFavoriteCity, useGeolocatedCity } from "@/hooks/useGeolocatedCity";
 import { CityCard } from "@/components/CityCard";
 import { CitySearchCard } from "@/components/CitySearchCard";
@@ -19,6 +20,8 @@ import { Forecast7Days } from "@/components/Forecast7Days";
 import { ForecastChart48h } from "@/components/ForecastChart48h";
 import { ModelScoreCard } from "@/components/ModelScoreCard";
 import { FavoritesBar } from "@/components/FavoritesBar";
+import { AirQualityCard } from "@/components/AirQualityCard";
+import { SeaCard } from "@/components/SeaCard";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Notice } from "@/components/Notice";
@@ -71,6 +74,7 @@ export default function Home() {
   const vigilance = useVigilanceSnapshot();
   const nextHourRain = useNextHourRain(activeCity);
   const modelScores = useModelScores(activeCity);
+  const environment = useEnvironment(activeCity);
 
   return (
     <div className="space-y-5">
@@ -154,8 +158,10 @@ export default function Home() {
         <ForecastChart48h forecastSet={forecastSet} />
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-2">
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <ModelScoreCard report={modelScores.report} isLoading={modelScores.isLoading} failed={modelScores.failed} />
+        <AirQualityCard air={environment.air} />
+        <SeaCard sea={environment.sea} />
       </section>
 
       <section>
