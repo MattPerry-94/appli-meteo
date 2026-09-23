@@ -232,7 +232,12 @@ export default function MapPage() {
               </div>
             ) : null}
 
-            {vigilance.error ? <Notice className="mt-4">{vigilance.error}</Notice> : null}
+            {vigilance.error ? (
+              // Une carte déjà chargée reste affichée : l'erreur ne porte que sur l'actualisation.
+              <Notice tone={vigilance.snapshot ? "warning" : "error"} className="mt-4">
+                {vigilance.snapshot ? `Actualisation impossible, dernière carte connue affichée. ${vigilance.error}` : vigilance.error}
+              </Notice>
+            ) : null}
           </Card>
 
           <Card className="p-5">

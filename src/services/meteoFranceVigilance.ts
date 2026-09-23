@@ -117,15 +117,25 @@ function getConfiguredBaseUrl() {
 }
 
 /**
- * Le proxy renvoie ses erreurs en JSON ({ error }). On les remonte telles
- * quelles pour distinguer une cle mal configuree d'une panne Meteo-France.
+ * Trois origines d'erreur a distinguer :
+ * - le proxy lui-meme ({ error }) : cle absente, ressource non autorisee ;
+ * - Meteo-France, relaye tel quel ({ detail }) : « no matching blob » quand
+ *   le produit est en cours de publication ;
+ * - ni l'un ni l'autre (page 404 texte ou HTML) : le proxy n'est pas deploye
+ *   ou pas route, l'appel n'a jamais atteint Meteo-France.
  */
 async function describeFailure(response: Response, fallback: string) {
   try {
-    const body = (await response.clone().json()) as { error?: unknown };
+    const body = (await response.clone().json()) as { error?: unknown; detail?: unknown };
     if (typeof body.error === "string" && body.error.trim()) return body.error.trim();
+    if (typeof body.detail === "string" && /no matching blob/i.test(body.detail)) {
+      return "Météo-France est en train de publier une nouvelle carte. Réessayez dans une minute.";
+    }
+    if (typeof body.detail === "string" && body.detail.trim()) return `${fallback} : ${body.detail.trim()} (${response.status}).`;
   } catch {
-    // Reponse non JSON (page d'erreur HTML, PDF tronque...) : on garde le fallback.
+    if (response.status === 404) {
+      return "Le relais Météo-France (/api/meteofrance) est introuvable : vérifiez que la fonction du dossier api/ est bien déployée.";
+    }
   }
   return `${fallback} (${response.status}).`;
 }
@@ -385,17 +395,54 @@ export function getDepartmentVigilance(period: VigilancePeriod, departmentCode: 
   };
 }
 
+/** Réponse transitoire de Météo-France pendant la publication d'un produit. */
+async function isPublishingGap(response: Response) {
+  if (response.status !== 404) return false;
+  try {
+    const body = (await response.clone().json()) as { detail?: unknown };
+    return typeof body.detail === "string" && /no matching blob/i.test(body.detail);
+  } catch {
+    return false;
+  }
+}
+
+function wait(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = window.setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timer);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true },
+    );
+  });
+}
+
+const PUBLISHING_RETRY_DELAYS_MS = [1500, 4000];
+
 export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal }): Promise<VigilanceSnapshot> {
-  const { signal, cancel } = withTimeout(16000, options?.signal);
+  const { signal, cancel } = withTimeout(30000, options?.signal);
 
   try {
-    const response = await fetch(`${getConfiguredBaseUrl()}/cartevigilance/encours`, {
-      signal,
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+    const request = () =>
+      fetch(`${getConfiguredBaseUrl()}/cartevigilance/encours`, {
+        signal,
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+    // Pendant la publication d'une nouvelle carte, Météo-France répond un
+    // court instant 404 « no matching blob » : on retente avant d'abandonner.
+    let response = await request();
+    for (const delay of PUBLISHING_RETRY_DELAYS_MS) {
+      if (!(await isPublishingGap(response))) break;
+      await wait(delay, signal);
+      response = await request();
+    }
 
     if (!response.ok) {
       throw new Error(await describeFailure(response, "Récupération des vigilances impossible"));
