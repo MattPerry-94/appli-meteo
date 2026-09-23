@@ -47,6 +47,7 @@ function mockFetch(handler: (url: string) => unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("fetchForecastModelSet", () => {
@@ -96,7 +97,9 @@ describe("fetchForecastModelSet", () => {
     expect(set.models.gfs.unavailable).toBeUndefined();
     expect(set.consensus.current?.tempC).toBe(20);
   });
-  it("lit ressenti, rafales, cumul et soleil, et les moyenne dans le consensus", async () => {
+  it("lit ressenti, rafales, cumul et soleil, et les pondère dans le consensus", async () => {
+    // Échéance fixée : le 23 à midi est dans les 48 h d'AROME, qui compte double.
+    vi.useFakeTimers({ now: new Date("2026-09-23T08:00:00Z"), toFake: ["Date"] });
     mockFetch((url) => {
       const gust = url.includes("ecmwf") ? 40 : 20;
       return {
@@ -117,9 +120,11 @@ describe("fetchForecastModelSet", () => {
 
     const set = await fetchForecastModelSet(city);
 
-    expect(set.consensus.current?.apparentTempC).toBe(18);
-    expect(set.consensus.current?.windGustKph).toBeCloseTo(80 / 3);
-    expect(set.consensus.daily[0].precipSumMm).toBe(1);
+    expect(set.consensus.current?.apparentTempC).toBeCloseTo(18);
+    // AROME 20 × 2, GFS 20 × 1, ECMWF 40 × 1,2
+    expect(set.consensus.current?.windGustKph).toBeCloseTo((2 * 20 + 20 + 1.2 * 40) / 4.2);
+    // Seul GFS annonce 3 mm
+    expect(set.consensus.daily[0].precipSumMm).toBeCloseTo(3 / 4.2);
     expect(set.consensus.daily[0].sunriseISO).toBe("2026-09-23T07:19");
     expect(set.consensus.hourly[0].precipMm).toBeCloseTo(0.4);
   });

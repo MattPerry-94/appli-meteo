@@ -1,13 +1,16 @@
 import type { FavoriteCity } from "@/stores/appStore";
 import {
-  averageDefined,
   chooseRepresentativeWeatherCode,
   computeReliabilityLabel,
   halfSpread,
+  hoursBetween,
+  modelWeight,
   rangeOf,
+  weightedAverage,
   type ReliabilityLabel,
 } from "@/utils/forecastConsensus";
 import { departmentCodeFromName, departmentCodeFromPostalCode, isDepartmentCode } from "@/utils/department";
+import { cityNowHourISO } from "@/utils/time";
 
 export type ForecastSourceId = "arome" | "gfs" | "ecmwf";
 export type ForecastViewId = ForecastSourceId | "consensus";
@@ -383,6 +386,11 @@ async function fetchModelForecastBundle(city: FavoriteCity, modelId: ForecastSou
   }
 }
 
+/** Moyenne des modèles, pondérée selon l'échéance (voir modelWeight). */
+function weighted<T extends { id: ForecastSourceId }>(entries: T[], pick: (entry: T) => number | undefined, leadHours: number) {
+  return weightedAverage(entries.map((entry) => ({ value: pick(entry), weight: modelWeight(entry.id, leadHours) })));
+}
+
 function getDay(bundle: CityForecastBundle, dateISO: string) {
   return bundle.daily.find((day) => day.dateISO === dateISO);
 }
@@ -399,13 +407,13 @@ function buildConsensusCurrent(city: FavoriteCity, models: Record<ForecastSource
   if (!entries.length) return undefined;
 
   return {
-    tempC: averageDefined(entries.map((entry) => entry.current?.tempC)),
+    tempC: weighted(entries, (entry) => entry.current?.tempC, 0),
     tempSpreadC: halfSpread(entries.map((entry) => entry.current?.tempC)),
-    apparentTempC: averageDefined(entries.map((entry) => entry.current?.apparentTempC)),
-    windKph: averageDefined(entries.map((entry) => entry.current?.windKph)),
-    windGustKph: averageDefined(entries.map((entry) => entry.current?.windGustKph)),
-    precipMm: averageDefined(entries.map((entry) => entry.current?.precipMm)),
-    humidityPct: averageDefined(entries.map((entry) => entry.current?.humidityPct)),
+    apparentTempC: weighted(entries, (entry) => entry.current?.apparentTempC, 0),
+    windKph: weighted(entries, (entry) => entry.current?.windKph, 0),
+    windGustKph: weighted(entries, (entry) => entry.current?.windGustKph, 0),
+    precipMm: weighted(entries, (entry) => entry.current?.precipMm, 0),
+    humidityPct: weighted(entries, (entry) => entry.current?.humidityPct, 0),
     weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.current?.weatherCode)),
     isDay: entries.find((entry) => typeof entry.current?.isDay === "boolean")?.current?.isDay,
     reliability: computeReliabilityLabel(
@@ -420,32 +428,34 @@ function buildConsensusCurrent(city: FavoriteCity, models: Record<ForecastSource
   };
 }
 
-function buildConsensusDaily(models: Record<ForecastSourceId, CityForecastBundle>) {
+function buildConsensusDaily(models: Record<ForecastSourceId, CityForecastBundle>, nowISO: string) {
   const allDates = Array.from(new Set(Object.values(models).flatMap((bundle) => bundle.daily.map((day) => day.dateISO)))).sort();
 
   return allDates.slice(0, 7).map((dateISO) => {
+    // Échéance du milieu de journée : suffit à savoir si AROME est dans ses 48 h.
+    const lead = Math.max(0, hoursBetween(nowISO, `${dateISO}T12:00`));
     const entries = (Object.entries(models) as Array<[ForecastSourceId, CityForecastBundle]>)
       .map(([id, bundle]) => ({ id, day: getDay(bundle, dateISO) }))
       .filter((entry): entry is { id: ForecastSourceId; day: DailyForecast } => Boolean(entry.day));
 
     return {
       dateISO,
-      tempMinC: averageDefined(entries.map((entry) => entry.day.tempMinC)),
-      tempMaxC: averageDefined(entries.map((entry) => entry.day.tempMaxC)),
+      tempMinC: weighted(entries, (entry) => entry.day.tempMinC, lead),
+      tempMaxC: weighted(entries, (entry) => entry.day.tempMaxC, lead),
       tempMinSpreadC: halfSpread(entries.map((entry) => entry.day.tempMinC)),
       tempMaxSpreadC: halfSpread(entries.map((entry) => entry.day.tempMaxC)),
       precipProbabilityRange: rangeOf(entries.map((entry) => entry.day.precipProbabilityPct)),
-      apparentTempMinC: averageDefined(entries.map((entry) => entry.day.apparentTempMinC)),
-      apparentTempMaxC: averageDefined(entries.map((entry) => entry.day.apparentTempMaxC)),
-      precipProbabilityPct: averageDefined(entries.map((entry) => entry.day.precipProbabilityPct)),
-      precipSumMm: averageDefined(entries.map((entry) => entry.day.precipSumMm)),
-      windMaxKph: averageDefined(entries.map((entry) => entry.day.windMaxKph)),
-      windGustMaxKph: averageDefined(entries.map((entry) => entry.day.windGustMaxKph)),
+      apparentTempMinC: weighted(entries, (entry) => entry.day.apparentTempMinC, lead),
+      apparentTempMaxC: weighted(entries, (entry) => entry.day.apparentTempMaxC, lead),
+      precipProbabilityPct: weighted(entries, (entry) => entry.day.precipProbabilityPct, lead),
+      precipSumMm: weighted(entries, (entry) => entry.day.precipSumMm, lead),
+      windMaxKph: weighted(entries, (entry) => entry.day.windMaxKph, lead),
+      windGustMaxKph: weighted(entries, (entry) => entry.day.windGustMaxKph, lead),
       // Donnée astronomique : identique d'un modèle à l'autre à la minute près.
       sunriseISO: entries.find((entry) => entry.day.sunriseISO)?.day.sunriseISO,
       sunsetISO: entries.find((entry) => entry.day.sunsetISO)?.day.sunsetISO,
-      uvMax: averageDefined(entries.map((entry) => entry.day.uvMax)),
-      humidityAvgPct: averageDefined(entries.map((entry) => entry.day.humidityAvgPct)),
+      uvMax: weighted(entries, (entry) => entry.day.uvMax, lead),
+      humidityAvgPct: weighted(entries, (entry) => entry.day.humidityAvgPct, lead),
       weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.day.weatherCode)),
       reliability: computeReliabilityLabel(
         entries.map((entry) => ({
@@ -463,26 +473,27 @@ function buildConsensusDaily(models: Record<ForecastSourceId, CityForecastBundle
   });
 }
 
-function buildConsensusHourly(models: Record<ForecastSourceId, CityForecastBundle>) {
+function buildConsensusHourly(models: Record<ForecastSourceId, CityForecastBundle>, nowISO: string) {
   const allTimes = Array.from(new Set(Object.values(models).flatMap((bundle) => bundle.hourly.map((point) => point.timeISO)))).sort();
 
   return allTimes.map((timeISO) => {
+    const lead = Math.max(0, hoursBetween(nowISO, timeISO));
     const entries = (Object.entries(models) as Array<[ForecastSourceId, CityForecastBundle]>)
       .map(([id, bundle]) => ({ id, point: getHour(bundle, timeISO) }))
       .filter((entry): entry is { id: ForecastSourceId; point: HourlyForecastPoint } => Boolean(entry.point));
 
     return {
       timeISO,
-      tempC: averageDefined(entries.map((entry) => entry.point.tempC)),
+      tempC: weighted(entries, (entry) => entry.point.tempC, lead),
       tempSpreadC: halfSpread(entries.map((entry) => entry.point.tempC)),
       tempRangeC: rangeOf(entries.map((entry) => entry.point.tempC)),
-      apparentTempC: averageDefined(entries.map((entry) => entry.point.apparentTempC)),
-      precipProbabilityPct: averageDefined(entries.map((entry) => entry.point.precipProbabilityPct)),
-      precipMm: averageDefined(entries.map((entry) => entry.point.precipMm)),
-      windKph: averageDefined(entries.map((entry) => entry.point.windKph)),
-      windGustKph: averageDefined(entries.map((entry) => entry.point.windGustKph)),
-      uv: averageDefined(entries.map((entry) => entry.point.uv)),
-      humidityPct: averageDefined(entries.map((entry) => entry.point.humidityPct)),
+      apparentTempC: weighted(entries, (entry) => entry.point.apparentTempC, lead),
+      precipProbabilityPct: weighted(entries, (entry) => entry.point.precipProbabilityPct, lead),
+      precipMm: weighted(entries, (entry) => entry.point.precipMm, lead),
+      windKph: weighted(entries, (entry) => entry.point.windKph, lead),
+      windGustKph: weighted(entries, (entry) => entry.point.windGustKph, lead),
+      uv: weighted(entries, (entry) => entry.point.uv, lead),
+      humidityPct: weighted(entries, (entry) => entry.point.humidityPct, lead),
       weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.point.weatherCode)),
       reliability: computeReliabilityLabel(
         entries.map((entry) => ({
@@ -501,6 +512,7 @@ function buildConsensusHourly(models: Record<ForecastSourceId, CityForecastBundl
 
 function buildConsensusBundle(city: FavoriteCity, models: Record<ForecastSourceId, CityForecastBundle>): CityForecastBundle {
   const timezone = Object.values(models).find((bundle) => bundle.timezone)?.timezone ?? "Europe/Paris";
+  const nowISO = cityNowHourISO(timezone);
 
   return {
     city,
@@ -508,10 +520,10 @@ function buildConsensusBundle(city: FavoriteCity, models: Record<ForecastSourceI
     modelLabel: "Consensus",
     timezone,
     updatedAtISO: new Date().toISOString(),
-    note: "Synthèse des modèles AROME, GFS et ECMWF avec indicateur de fiabilité.",
+    note: "Synthèse pondérée d'AROME, GFS et ECMWF : AROME compte double sur 48 h, ECMWF un peu plus que GFS. Fiabilité et écart restent mesurés entre modèles.",
     current: buildConsensusCurrent(city, models),
-    daily: buildConsensusDaily(models),
-    hourly: buildConsensusHourly(models),
+    daily: buildConsensusDaily(models, nowISO),
+    hourly: buildConsensusHourly(models, nowISO),
   };
 }
 

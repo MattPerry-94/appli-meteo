@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseRepresentativeWeatherCode, computeReliabilityLabel, halfSpread, rangeOf } from "@/utils/forecastConsensus";
+import { chooseRepresentativeWeatherCode, computeReliabilityLabel, halfSpread, hoursBetween, modelWeight, rangeOf, weightedAverage } from "@/utils/forecastConsensus";
 
 describe("forecastConsensus", () => {
   it("retourne ultra fiable quand les 3 modèles convergent", () => {
@@ -50,5 +50,24 @@ describe("écart entre modèles", () => {
 
   it("rangeOf donne la fourchette", () => {
     expect(rangeOf([10, 60, 30])).toEqual([10, 60]);
+  });
+});
+
+describe("consensus pondéré", () => {
+  it("AROME compte double sur 48 h, puis simple", () => {
+    expect(modelWeight("arome", 0)).toBe(2);
+    expect(modelWeight("arome", 47)).toBe(2);
+    expect(modelWeight("arome", 48)).toBe(1);
+    expect(modelWeight("ecmwf", 100)).toBeGreaterThan(modelWeight("gfs", 100));
+  });
+
+  it("ignore les valeurs absentes et leur poids", () => {
+    expect(weightedAverage([{ value: 20, weight: 2 }, { value: undefined, weight: 5 }, { value: 23, weight: 1 }])).toBe(21);
+    expect(weightedAverage([{ value: undefined, weight: 1 }])).toBeUndefined();
+  });
+
+  it("mesure l'échéance entre horodatages locaux", () => {
+    expect(hoursBetween("2026-09-23T10:00", "2026-09-25T12:00")).toBe(50);
+    expect(hoursBetween("2026-09-23T10:00", "2026-09-24")).toBe(14);
   });
 });

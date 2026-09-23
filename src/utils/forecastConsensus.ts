@@ -187,3 +187,36 @@ export function rangeOf(values: Array<number | undefined>): [number, number] | u
   if (defined.length < 2) return undefined;
   return [Math.min(...defined), Math.max(...defined)];
 }
+
+export type WeightedModelId = "arome" | "gfs" | "ecmwf";
+
+/**
+ * Poids d'un modèle dans le consensus, selon l'échéance (heures depuis
+ * maintenant). AROME (maille de 1,3 à 2,5 km) est bien meilleur que les
+ * modèles globaux à courte échéance : il compte double sur 48 h, puis
+ * simple jusqu'à la fin de sa portée (4 jours). ECMWF est en moyenne le plus
+ * juste des deux globaux, d'où un léger avantage sur GFS.
+ */
+export function modelWeight(modelId: WeightedModelId, leadHours: number) {
+  if (modelId === "arome") return leadHours < 48 ? 2 : 1;
+  if (modelId === "ecmwf") return 1.2;
+  return 1;
+}
+
+/** Moyenne pondérée des valeurs définies ; les poids des valeurs absentes ne comptent pas. */
+export function weightedAverage(entries: Array<{ value: number | undefined; weight: number }>) {
+  let sum = 0;
+  let total = 0;
+  for (const { value, weight } of entries) {
+    if (typeof value !== "number" || weight <= 0) continue;
+    sum += value * weight;
+    total += weight;
+  }
+  return total > 0 ? sum / total : undefined;
+}
+
+/** Heures entre deux horodatages locaux Open-Meteo (« 2026-09-23T14:00 »). */
+export function hoursBetween(fromISO: string, toISO: string) {
+  const toMs = (iso: string) => Date.parse(`${iso.length === 10 ? `${iso}T00:00` : iso}:00Z`);
+  return (toMs(toISO) - toMs(fromISO)) / 3_600_000;
+}
