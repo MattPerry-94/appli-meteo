@@ -64,6 +64,9 @@ un bulletin ne change que quelques fois par jour.
 | `npm run lint` | ESLint. |
 | `npm test` | Tests unitaires (Vitest). |
 
+La CI GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) enchaîne
+lint, typecheck, tests et build à chaque push sur `main` et sur les pull requests.
+
 ## Architecture
 
 ```
