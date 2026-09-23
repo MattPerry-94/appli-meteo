@@ -1,11 +1,13 @@
 import { useMemo } from "react";
-import { useAppStore, type CitySource } from "@/stores/appStore";
+import { Star } from "lucide-react";
+import { isSameCity, MAX_FAVORITES, useAppStore, type CitySource } from "@/stores/appStore";
 import { useForecastBundles } from "@/hooks/useForecastBundles";
 import { useAmbience } from "@/hooks/useAmbience";
 import { useDepartmentBulletin } from "@/hooks/useDepartmentBulletin";
 import { useVigilanceSnapshot } from "@/hooks/useVigilanceSnapshot";
 import { useNextHourRain } from "@/hooks/useNextHourRain";
 import { useModelScores } from "@/hooks/useModelScores";
+import { useCityBriefs } from "@/hooks/useCityBriefs";
 import { toFavoriteCity, useGeolocatedCity } from "@/hooks/useGeolocatedCity";
 import { CityCard } from "@/components/CityCard";
 import { CitySearchCard } from "@/components/CitySearchCard";
@@ -16,6 +18,7 @@ import { NextHourRain } from "@/components/NextHourRain";
 import { Forecast7Days } from "@/components/Forecast7Days";
 import { ForecastChart48h } from "@/components/ForecastChart48h";
 import { ModelScoreCard } from "@/components/ModelScoreCard";
+import { FavoritesBar } from "@/components/FavoritesBar";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Notice } from "@/components/Notice";
@@ -48,6 +51,11 @@ export default function Home() {
   const activeCity = useAppStore((s) => s.activeCity);
   const citySource = useAppStore((s) => s.citySource);
   const setActiveCity = useAppStore((s) => s.setActiveCity);
+  const favorites = useAppStore((s) => s.favorites);
+  const toggleFavorite = useAppStore((s) => s.toggleFavorite);
+  const isFavorite = favorites.some((city) => isSameCity(city, activeCity));
+  const favoritesFull = !isFavorite && favorites.length >= MAX_FAVORITES;
+  const briefs = useCityBriefs(favorites);
 
   const cities = useMemo(() => [activeCity], [activeCity]);
   const { bundles, isLoading, error, updatedAt } = useForecastBundles(cities);
@@ -66,6 +74,14 @@ export default function Home() {
 
   return (
     <div className="space-y-5">
+      <FavoritesBar
+        favorites={favorites}
+        briefs={briefs}
+        activeCity={activeCity}
+        onSelect={(city) => setActiveCity(city, "manual")}
+        onRemove={toggleFavorite}
+      />
+
       <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
         <Card className="p-5">
           <div className="flex items-start justify-between gap-4">
@@ -73,9 +89,20 @@ export default function Home() {
               <div className="eyebrow">Ville active</div>
               <div className="display mt-1 truncate text-2xl">{activeCity.name}</div>
             </div>
-            <Badge tone="zinc" className="shrink-0">
-              {sourceLabel(citySource)}
-            </Badge>
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge tone="zinc">{sourceLabel(citySource)}</Badge>
+              <button
+                type="button"
+                onClick={() => toggleFavorite(activeCity)}
+                disabled={favoritesFull}
+                aria-pressed={isFavorite}
+                aria-label={isFavorite ? `Retirer ${activeCity.name} des favoris` : `Ajouter ${activeCity.name} aux favoris`}
+                title={favoritesFull ? `${MAX_FAVORITES} favoris au maximum` : undefined}
+                className="btn btn-ghost rounded-2xl px-2.5 disabled:opacity-40"
+              >
+                <Star className={isFavorite ? "size-4 fill-amber-400 text-amber-500" : "size-4"} aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
           <div className="mt-4">

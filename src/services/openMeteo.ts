@@ -719,3 +719,53 @@ export async function fetchNextHourRain(city: FavoriteCity, options?: { signal?:
     cancel();
   }
 }
+
+export type CityBrief = {
+  cityId: string;
+  tempC?: number;
+  weatherCode?: number;
+  isDay?: boolean;
+  tempMinC?: number;
+  tempMaxC?: number;
+};
+
+/**
+ * Météo actuelle de plusieurs villes en une seule requête (Open-Meteo accepte
+ * des listes de coordonnées). Sert à la bande des favoris : un aperçu
+ * best_match suffit, sans les trois modèles du consensus.
+ */
+export async function fetchCityBriefs(cities: FavoriteCity[], options?: { signal?: AbortSignal }): Promise<CityBrief[]> {
+  if (!cities.length) return [];
+  const { signal, cancel } = withTimeout(options?.signal, 12000);
+  try {
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude", cities.map((city) => city.lat.toFixed(4)).join(","));
+    url.searchParams.set("longitude", cities.map((city) => city.lon.toFixed(4)).join(","));
+    url.searchParams.set("current", "temperature_2m,weather_code,is_day");
+    url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min");
+    url.searchParams.set("forecast_days", "1");
+    url.searchParams.set("timezone", "auto");
+
+    const res = await fetch(url.toString(), { signal });
+    if (!res.ok) throw new Error(`Aperçu des favoris indisponible (${res.status}).`);
+    const body = (await res.json()) as unknown;
+    // Une seule ville : un objet ; plusieurs : une liste, dans l'ordre demandé.
+    const items = (Array.isArray(body) ? body : [body]) as Array<Record<string, unknown>>;
+
+    return cities.map((city, index) => {
+      const item = items[index] ?? {};
+      const current = typeof item.current === "object" && item.current ? (item.current as Record<string, unknown>) : null;
+      const daily = typeof item.daily === "object" && item.daily ? (item.daily as Record<string, unknown>) : null;
+      return {
+        cityId: city.id,
+        tempC: numberField(current, "temperature_2m"),
+        weatherCode: numberField(current, "weather_code"),
+        isDay: typeof current?.is_day === "number" ? current.is_day === 1 : undefined,
+        tempMaxC: numberAt(column(daily, "temperature_2m_max"), 0),
+        tempMinC: numberAt(column(daily, "temperature_2m_min"), 0),
+      };
+    });
+  } finally {
+    cancel();
+  }
+}
