@@ -36,6 +36,14 @@ function sourceLabel(source: CitySource) {
   return "Par défaut";
 }
 
+/** « 11:51 » le jour même, « lun. 22 à 18:05 » sinon. */
+function formatSavedAt(date: Date) {
+  const sameDay = date.toDateString() === new Date().toDateString();
+  return sameDay
+    ? formatTimeHHmm(date)
+    : new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
 function SkeletonCard() {
   return (
     <Card className="h-[150px] p-5">
@@ -125,7 +133,11 @@ export default function Home() {
           {updatedAt ? (
             <div className="numeric mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
               <span className={cn("size-1.5 rounded-full bg-emerald-500", isLoading && "accent-dot animate-pulse")} />
-              {isLoading ? "Actualisation…" : `Mis à jour à ${formatTimeHHmm(updatedAt)}`}
+              {isLoading
+                ? "Actualisation…"
+                : Date.now() - updatedAt.getTime() > 15 * 60 * 1000
+                  ? `Données du ${formatSavedAt(updatedAt)}`
+                  : `Mis à jour à ${formatTimeHHmm(updatedAt)}`}
             </div>
           ) : null}
 

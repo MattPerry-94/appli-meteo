@@ -43,7 +43,9 @@ export function useForecastBundles(cities: FavoriteCity[]) {
       const next: Record<string, CityForecastModelSet> = {};
       for (const bundle of list) next[bundle.city.id] = bundle;
       setBundles(next);
-      setUpdatedAt(new Date());
+      // Heure des données (enregistrées hors ligne) et non de l'affichage.
+      const oldest = list.map((bundle) => bundle.updatedAtISO).sort()[0];
+      setUpdatedAt(oldest ? new Date(oldest) : new Date());
     } catch (e) {
       if (signal.aborted) return;
       setError(e instanceof Error ? e.message : "Erreur de chargement");

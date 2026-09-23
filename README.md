@@ -26,6 +26,21 @@ bulletins de vigilance Météo-France pour la ville active.
 - **Ville active** déterminée par géolocalisation du navigateur, ou par
   recherche manuelle ; elle est mémorisée localement.
 
+## Application installable et hors ligne
+
+L'appli est une PWA : « Installer » dans Chrome/Edge, ou « Sur l'écran
+d'accueil » dans Safari. Le service worker ([public/sw.js](public/sw.js)) :
+
+- sert le site depuis le cache si le réseau manque ;
+- garde la dernière réponse de chaque source météo (80 au plus) : une ville
+  déjà consultée reste lisible hors ligne, avec un bandeau et l'heure réelle
+  des données (en-tête `x-meteo-saved-at` ajouté à l'enregistrement).
+
+Il n'est enregistré qu'en production (`npm run build` puis `npm run preview`
+pour l'essayer en local). Changer `VERSION` dans `sw.js` vide ses caches.
+
+Une ville se partage par son URL : `/?ville=Nice&lat=43.7034&lon=7.2663`.
+
 ## Démarrage
 
 ```bash

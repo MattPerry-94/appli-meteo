@@ -128,4 +128,20 @@ describe("fetchForecastModelSet", () => {
     expect(set.consensus.daily[0].sunriseISO).toBe("2026-09-23T07:19");
     expect(set.consensus.hourly[0].precipMm).toBeCloseTo(0.4);
   });
+  it("date les prévisions de leur enregistrement quand le service worker les ressert", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify(payload({ temperature_2m: 20 })), {
+          status: 200,
+          headers: { "content-type": "application/json", "x-meteo-saved-at": "2026-09-22T18:05:00.000Z" },
+        }),
+      ),
+    );
+
+    const set = await fetchForecastModelSet(city);
+
+    expect(set.updatedAtISO).toBe("2026-09-22T18:05:00.000Z");
+    expect(set.models.gfs.updatedAtISO).toBe("2026-09-22T18:05:00.000Z");
+  });
 });

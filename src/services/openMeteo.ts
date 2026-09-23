@@ -253,7 +253,22 @@ function numberField(block: Record<string, unknown> | null, key: string) {
   return typeof block?.[key] === "number" ? (block[key] as number) : undefined;
 }
 
-function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record<string, unknown>): CityForecastBundle {
+/**
+ * Hors ligne, le service worker ressert la dernière réponse enregistrée et
+ * indique quand elle l'a été : c'est l'âge réel des données, pas l'heure du
+ * rechargement.
+ */
+export function savedAtOf(response: Response) {
+  const savedAt = response.headers.get("x-meteo-saved-at");
+  return savedAt && !Number.isNaN(Date.parse(savedAt)) ? savedAt : undefined;
+}
+
+function parseBundle(
+  city: FavoriteCity,
+  modelId: ForecastSourceId,
+  data: Record<string, unknown>,
+  savedAtISO?: string,
+): CityForecastBundle {
   const config = MODEL_CONFIG[modelId];
   const timezone = typeof data.timezone === "string" ? data.timezone : "Europe/Paris";
 
@@ -339,7 +354,7 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
     modelId,
     modelLabel: config.label,
     timezone,
-    updatedAtISO: new Date().toISOString(),
+    updatedAtISO: savedAtISO ?? new Date().toISOString(),
     note: config.note,
     current,
     daily,
@@ -376,7 +391,7 @@ async function fetchModelForecastBundle(city: FavoriteCity, modelId: ForecastSou
           continue;
         }
         const data = (await res.json()) as Record<string, unknown>;
-        return parseBundle(city, modelId, data);
+        return parseBundle(city, modelId, data, savedAtOf(res));
       } catch (error) {
         // Une annulation demandée par l'appelant doit remonter ; une panne
         // réseau ou un timeout ne doit pas faire tomber les deux autres modèles.
@@ -674,11 +689,17 @@ export async function fetchForecastModelSet(city: FavoriteCity, options?: { sign
   }
 
   const consensus = buildConsensusBundle(city, models);
+  // Donnée la plus ancienne des modèles qui ont répondu : c'est elle qui
+  // compte pour dire « à jour de telle heure » (hors ligne notamment).
+  const updatedAtISO = Object.values(models)
+    .filter((bundle) => !bundle.unavailable)
+    .map((bundle) => bundle.updatedAtISO)
+    .sort()[0];
 
   return {
     city,
     timezone: consensus.timezone,
-    updatedAtISO: new Date().toISOString(),
+    updatedAtISO: updatedAtISO ?? new Date().toISOString(),
     models,
     consensus,
   };

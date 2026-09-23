@@ -1,0 +1,20 @@
+{
+  "name": "Appli Météo",
+  "short_name": "Météo",
+  "description": "Prévisions à 7 jours issues du consensus AROME, GFS et ECMWF, vigilances Météo-France, pluie dans l'heure.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Vigilances", "url": "/carte?vue=vigilances", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Radar", "url": "/carte", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

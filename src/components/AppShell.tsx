@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/appStore";
 import { cityToParams } from "@/utils/cityUrl";
 import { useTheme } from "@/hooks/useTheme";
 import { useCityUrlSync } from "@/hooks/useCityUrlSync";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 function AppNavLink(props: { to: string; label: string; icon: ReactNode }) {
   const activeCity = useAppStore((s) => s.activeCity);
@@ -59,6 +60,8 @@ export default function AppShell() {
           <AppNavLink to="/" label="Accueil" icon={<Sun className="size-4" />} />
           <AppNavLink to="/carte" label="Carte" icon={<Map className="size-4" />} />
         </nav>
+
+        <OfflineBanner />
 
         <main className="mt-6 animate-rise">
           <Outlet />
