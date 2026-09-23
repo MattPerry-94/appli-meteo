@@ -4,12 +4,14 @@ import { useForecastBundles } from "@/hooks/useForecastBundles";
 import { useAmbience } from "@/hooks/useAmbience";
 import { useDepartmentBulletin } from "@/hooks/useDepartmentBulletin";
 import { useVigilanceSnapshot } from "@/hooks/useVigilanceSnapshot";
+import { useNextHourRain } from "@/hooks/useNextHourRain";
 import { toFavoriteCity, useGeolocatedCity } from "@/hooks/useGeolocatedCity";
 import { CityCard } from "@/components/CityCard";
 import { CitySearchCard } from "@/components/CitySearchCard";
 import { BulletinCard } from "@/components/BulletinCard";
 import { PreventionCard } from "@/components/PreventionCard";
 import { VigilanceStrip } from "@/components/VigilanceStrip";
+import { NextHourRain } from "@/components/NextHourRain";
 import { Forecast7Days } from "@/components/Forecast7Days";
 import { ForecastChart48h } from "@/components/ForecastChart48h";
 import { Card } from "@/components/Card";
@@ -57,6 +59,7 @@ export default function Home() {
   const departmentCode = useMemo(() => inferDepartmentCode(activeCity), [activeCity]);
   const { bulletin, isLoading: isLoadingBulletin } = useDepartmentBulletin(departmentCode);
   const vigilance = useVigilanceSnapshot();
+  const nextHourRain = useNextHourRain(activeCity);
 
   return (
     <div className="space-y-5">
@@ -89,6 +92,8 @@ export default function Home() {
               {isLoading ? "Actualisation…" : `Mis à jour à ${formatTimeHHmm(updatedAt)}`}
             </div>
           ) : null}
+
+          <NextHourRain slots={nextHourRain.slots} fine={nextHourRain.fine} className="mt-4" />
 
           <VigilanceStrip
             snapshot={vigilance.snapshot}

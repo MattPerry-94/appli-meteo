@@ -666,3 +666,39 @@ export async function fetchForecastModelSet(city: FavoriteCity, options?: { sign
     consensus,
   };
 }
+
+/**
+ * Pluie des cinq prochains quarts d'heure (le premier est celui en cours).
+ * best_match laisse Open-Meteo choisir la meilleure source au quart d'heure :
+ * AROME sur la France, HRRR aux États-Unis, ailleurs un modèle horaire
+ * interpolé, moins fin — d'où le champ `fine`.
+ */
+export async function fetchNextHourRain(city: FavoriteCity, options?: { signal?: AbortSignal }) {
+  const { signal, cancel } = withTimeout(options?.signal, 12000);
+  try {
+    const url = new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude", String(city.lat));
+    url.searchParams.set("longitude", String(city.lon));
+    url.searchParams.set("models", "best_match");
+    url.searchParams.set("minutely_15", "precipitation");
+    url.searchParams.set("forecast_minutely_15", "5");
+    url.searchParams.set("timezone", "auto");
+
+    const res = await fetch(url.toString(), { signal });
+    if (!res.ok) throw new Error(`Pluie dans l'heure indisponible (${res.status}).`);
+    const data = (await res.json()) as Record<string, unknown>;
+    const block = typeof data.minutely_15 === "object" && data.minutely_15 ? (data.minutely_15 as Record<string, unknown>) : null;
+    const times = column(block, "time");
+    const mm = column(block, "precipitation");
+
+    return {
+      slots: times
+        .map((time, idx) => (typeof time === "string" ? { timeISO: time, mm: numberAt(mm, idx) } : null))
+        .filter((slot): slot is { timeISO: string; mm: number | undefined } => slot !== null),
+      // France : AROME au quart d'heure ; États-Unis : HRRR. Ailleurs, interpolation.
+      fine: city.countryCode?.toUpperCase() === "FR" || city.countryCode?.toUpperCase() === "US",
+    };
+  } finally {
+    cancel();
+  }
+}
