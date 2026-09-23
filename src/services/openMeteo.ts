@@ -136,6 +136,11 @@ const MODEL_CONFIG: Record<ForecastSourceId, ModelConfig> = {
   },
 };
 
+/** Identifiant Open-Meteo du modèle (paramètre `models`). */
+export function getModelParam(modelId: ForecastSourceId) {
+  return MODEL_CONFIG[modelId].modelParam;
+}
+
 export function getForecastViewLabel(view: ForecastViewId) {
   if (view === "consensus") return "Consensus";
   return MODEL_CONFIG[view].label;

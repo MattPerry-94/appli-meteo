@@ -5,6 +5,7 @@ import { useAmbience } from "@/hooks/useAmbience";
 import { useDepartmentBulletin } from "@/hooks/useDepartmentBulletin";
 import { useVigilanceSnapshot } from "@/hooks/useVigilanceSnapshot";
 import { useNextHourRain } from "@/hooks/useNextHourRain";
+import { useModelScores } from "@/hooks/useModelScores";
 import { toFavoriteCity, useGeolocatedCity } from "@/hooks/useGeolocatedCity";
 import { CityCard } from "@/components/CityCard";
 import { CitySearchCard } from "@/components/CitySearchCard";
@@ -14,6 +15,7 @@ import { VigilanceStrip } from "@/components/VigilanceStrip";
 import { NextHourRain } from "@/components/NextHourRain";
 import { Forecast7Days } from "@/components/Forecast7Days";
 import { ForecastChart48h } from "@/components/ForecastChart48h";
+import { ModelScoreCard } from "@/components/ModelScoreCard";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Notice } from "@/components/Notice";
@@ -60,6 +62,7 @@ export default function Home() {
   const { bulletin, isLoading: isLoadingBulletin } = useDepartmentBulletin(departmentCode);
   const vigilance = useVigilanceSnapshot();
   const nextHourRain = useNextHourRain(activeCity);
+  const modelScores = useModelScores(activeCity);
 
   return (
     <div className="space-y-5">
@@ -122,6 +125,10 @@ export default function Home() {
 
       <section>
         <ForecastChart48h forecastSet={forecastSet} />
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
+        <ModelScoreCard report={modelScores.report} isLoading={modelScores.isLoading} failed={modelScores.failed} />
       </section>
 
       <section>
