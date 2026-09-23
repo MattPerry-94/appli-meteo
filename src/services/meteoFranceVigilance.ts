@@ -166,7 +166,7 @@ function nameMatcher(departmentCode: string) {
   return new RegExp(`(?<![\\p{L}'’-])${escapeRegExp(name)}(?![\\p{L}'’-])`, "u");
 }
 
-function parsePeriods(data: Record<string, unknown>): VigilancePeriod[] {
+export function parsePeriods(data: Record<string, unknown>): VigilancePeriod[] {
   const product = typeof data.product === "object" && data.product ? (data.product as Record<string, unknown>) : null;
   const periods = Array.isArray(product?.periods) ? (product?.periods as unknown[]) : [];
 
@@ -208,25 +208,25 @@ function parsePeriods(data: Record<string, unknown>): VigilancePeriod[] {
         })
         .filter((item): item is VigilanceDepartment => Boolean(item));
 
-      const label =
-        typeof obj.echeance === "string" && obj.echeance.trim()
-          ? obj.echeance.trim()
-          : index === 0
-            ? "Aujourd'hui"
-            : index === 1
-              ? "Demain"
-              : `Période ${index + 1}`;
+      // Météo-France nomme ses échéances « J » et « J1 » (aujourd'hui, demain).
+      const echeance = typeof obj.echeance === "string" ? obj.echeance.trim().toUpperCase() : "";
+      const position = echeance === "J" ? 0 : echeance === "J1" ? 1 : index;
+      const label = position === 0 ? "Aujourd'hui" : position === 1 ? "Demain" : `Période ${index + 1}`;
 
-      return {
-        id: label,
+      const parsed: VigilancePeriod = {
+        id: echeance || `P${index}`,
         label,
         beginISO: typeof obj.begin_validity_time === "string" ? obj.begin_validity_time : undefined,
         endISO: typeof obj.end_validity_time === "string" ? obj.end_validity_time : undefined,
         summaryText: summaryLines.filter((line): line is string => typeof line === "string").join(" "),
         departments,
-      } satisfies VigilancePeriod;
+      };
+      return { period: parsed, position };
     })
-    .filter(Boolean) as VigilancePeriod[];
+    .filter((entry): entry is { period: VigilancePeriod; position: number } => Boolean(entry))
+    // Aujourd'hui d'abord, puis demain, quel que soit l'ordre de la réponse.
+    .sort((a, b) => a.position - b.position)
+    .map((entry) => entry.period);
 }
 
 type BulletinCandidate = { bulletin: MeteoFranceDepartmentBulletin; searchLines: string[] };
@@ -353,6 +353,9 @@ export async function fetchMeteoFranceDepartmentBulletin(
       },
     });
 
+    // Sans vigilance en cours (carte toute verte), Météo-France n'a aucun
+    // texte à publier et répond 404 « no matching blob » : ce n'est pas une panne.
+    if (response.status === 404) return null;
     if (!response.ok) {
       throw new Error(await describeFailure(response, "Récupération des textes de vigilance impossible"));
     }
@@ -362,6 +365,32 @@ export async function fetchMeteoFranceDepartmentBulletin(
   } finally {
     cancel();
   }
+}
+
+/**
+ * Vigilance d'un département pour une période. Les départements côtiers ont
+ * un second domaine, suffixé « 10 » (0610 pour le littoral des
+ * Alpes-Maritimes), qui porte le risque vagues-submersion : il est fusionné
+ * avec le département, en gardant pour chaque risque le niveau le plus élevé.
+ */
+export function getDepartmentVigilance(period: VigilancePeriod, departmentCode: string): VigilanceDepartment | null {
+  const code = departmentCode.trim().toUpperCase();
+  const domains = period.departments.filter((department) => department.code === code || department.code === `${code}10`);
+  if (!domains.length) return null;
+
+  const risks: VigilanceDepartment["risks"] = {};
+  for (const domain of domains) {
+    for (const [riskId, level] of Object.entries(domain.risks) as Array<[string, VigilanceLevelId]>) {
+      const id = Number(riskId) as VigilanceRiskId;
+      risks[id] = Math.max(risks[id] ?? 1, level) as VigilanceLevelId;
+    }
+  }
+
+  return {
+    code,
+    overallLevel: Math.max(...domains.map((domain) => domain.overallLevel)) as VigilanceLevelId,
+    risks,
+  };
 }
 
 export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal }): Promise<VigilanceSnapshot> {
@@ -382,9 +411,10 @@ export async function fetchMeteoFranceVigilance(options?: { signal?: AbortSignal
 
     const data = (await response.json()) as Record<string, unknown>;
     const periods = parsePeriods(data);
+    const product = typeof data.product === "object" && data.product ? (data.product as Record<string, unknown>) : null;
 
     return {
-      updatedAtISO: new Date().toISOString(),
+      updatedAtISO: typeof product?.update_time === "string" ? product.update_time : new Date().toISOString(),
       periods,
       sourceUrl: DEFAULT_SOURCE_URL,
     };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findDepartmentBulletin } from "@/services/meteoFranceVigilance";
+import { findDepartmentBulletin, getDepartmentVigilance, parsePeriods } from "@/services/meteoFranceVigilance";
 
 /** Un terme de bulletin, avec les lignes de texte fournies. */
 function term(lines: string[], extra: Record<string, unknown> = {}) {
@@ -66,5 +66,72 @@ describe("findDepartmentBulletin", () => {
   it("ignore le bloc national et les réponses vides", () => {
     expect(findDepartmentBulletin({}, "06")).toBeNull();
     expect(findDepartmentBulletin(payload([]), "06")).toBeNull();
+  });
+});
+
+/** Domaine au format réel de cartevigilance/encours (V6). */
+function domain(id: string, max: number, phenomena: Record<string, number>) {
+  return {
+    domain_id: id,
+    max_color_id: max,
+    phenomenon_items: Object.entries(phenomena).map(([phenomenonId, color]) => ({
+      phenomenon_id: phenomenonId,
+      phenomenon_max_color_id: color,
+      timelaps_items: [],
+    })),
+  };
+}
+
+const carte = {
+  product: {
+    update_time: "2026-09-23T04:00:06Z",
+    periods: [
+      {
+        echeance: "J1",
+        begin_validity_time: "2026-09-24T00:00:00Z",
+        timelaps: { domain_ids: [domain("06", 1, { "1": 1, "3": 1 })] },
+      },
+      {
+        echeance: "J",
+        begin_validity_time: "2026-09-23T04:00:00Z",
+        timelaps: {
+          domain_ids: [
+            domain("FRA", 3, {}),
+            domain("06", 2, { "1": 1, "3": 2 }),
+            // Littoral des Alpes-Maritimes : porte le risque vagues-submersion.
+            domain("0610", 3, { "9": 3 }),
+            domain("59", 1, { "1": 1 }),
+          ],
+        },
+      },
+    ],
+  },
+};
+
+describe("parsePeriods", () => {
+  it("nomme les échéances J et J1 et met aujourd'hui en premier", () => {
+    const periods = parsePeriods(carte);
+    expect(periods.map((period) => [period.id, period.label])).toEqual([
+      ["J", "Aujourd'hui"],
+      ["J1", "Demain"],
+    ]);
+  });
+});
+
+describe("getDepartmentVigilance", () => {
+  const today = parsePeriods(carte)[0];
+
+  it("fusionne le département et son domaine côtier", () => {
+    const vigilance = getDepartmentVigilance(today, "06");
+    expect(vigilance?.overallLevel).toBe(3);
+    expect(vigilance?.risks).toEqual({ 1: 1, 3: 2, 9: 3 });
+  });
+
+  it("n'attribue pas le littoral d'un autre département", () => {
+    expect(getDepartmentVigilance(today, "59")?.overallLevel).toBe(1);
+  });
+
+  it("renvoie null pour un département absent", () => {
+    expect(getDepartmentVigilance(today, "974")).toBeNull();
   });
 });

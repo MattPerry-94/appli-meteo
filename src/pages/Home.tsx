@@ -3,11 +3,13 @@ import { useAppStore, type CitySource } from "@/stores/appStore";
 import { useForecastBundles } from "@/hooks/useForecastBundles";
 import { useAmbience } from "@/hooks/useAmbience";
 import { useDepartmentBulletin } from "@/hooks/useDepartmentBulletin";
+import { useVigilanceSnapshot } from "@/hooks/useVigilanceSnapshot";
 import { toFavoriteCity, useGeolocatedCity } from "@/hooks/useGeolocatedCity";
 import { CityCard } from "@/components/CityCard";
 import { CitySearchCard } from "@/components/CitySearchCard";
 import { BulletinCard } from "@/components/BulletinCard";
 import { PreventionCard } from "@/components/PreventionCard";
+import { VigilanceStrip } from "@/components/VigilanceStrip";
 import { Forecast7Days } from "@/components/Forecast7Days";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
@@ -53,6 +55,7 @@ export default function Home() {
   const geolocation = useGeolocatedCity();
   const departmentCode = useMemo(() => inferDepartmentCode(activeCity), [activeCity]);
   const { bulletin, isLoading: isLoadingBulletin } = useDepartmentBulletin(departmentCode);
+  const vigilance = useVigilanceSnapshot();
 
   return (
     <div className="space-y-5">
@@ -85,6 +88,13 @@ export default function Home() {
               {isLoading ? "Actualisation…" : `Mis à jour à ${formatTimeHHmm(updatedAt)}`}
             </div>
           ) : null}
+
+          <VigilanceStrip
+            snapshot={vigilance.snapshot}
+            departmentCode={departmentCode}
+            isLoading={vigilance.isLoading}
+            className="mt-4"
+          />
 
           <PreventionCard tempC={currentTempC} className="mt-4" />
         </Card>
