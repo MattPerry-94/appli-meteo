@@ -41,6 +41,24 @@ pour l'essayer en local). Changer `VERSION` dans `sw.js` vide ses caches.
 
 Une ville se partage par son URL : `/?ville=Nice&lat=43.7034&lon=7.2663`.
 
+### Alertes de vigilance
+
+« M'alerter en cas de vigilance orange ou rouge » (sous la pastille de
+vigilance) envoie une notification du système pour le département de la ville
+active, une seule fois par épisode ; un passage d'orange à rouge est signalé.
+
+- La vérification a lieu tant que l'appli est ouverte, même en onglet
+  d'arrière-plan (toutes les 15 minutes).
+- Une fois l'appli installée, Chrome (Android surtout) peut aussi la réveiller
+  périodiquement (Periodic Background Sync) : le service worker relit alors la
+  carte de vigilance lui-même.
+- Navigateur complètement fermé ou iPhone : il faudrait de vraies
+  notifications push (Web Push), donc un serveur qui stocke les abonnements et
+  vérifie la vigilance à intervalle régulier. Non inclus.
+
+Les préférences sont partagées avec le service worker via le Cache Storage
+(`meteo-prefs`, voir [src/services/alertPrefs.ts](src/services/alertPrefs.ts)).
+
 ## Démarrage
 
 ```bash

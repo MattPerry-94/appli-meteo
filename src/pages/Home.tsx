@@ -9,6 +9,7 @@ import { useNextHourRain } from "@/hooks/useNextHourRain";
 import { useModelScores } from "@/hooks/useModelScores";
 import { useCityBriefs } from "@/hooks/useCityBriefs";
 import { useEnvironment } from "@/hooks/useEnvironment";
+import { useVigilanceAlerts } from "@/hooks/useVigilanceAlerts";
 import { toFavoriteCity, useGeolocatedCity } from "@/hooks/useGeolocatedCity";
 import { CityCard } from "@/components/CityCard";
 import { CitySearchCard } from "@/components/CitySearchCard";
@@ -23,6 +24,7 @@ import { FavoritesBar } from "@/components/FavoritesBar";
 import { ShareCityButton } from "@/components/ShareCityButton";
 import { AirQualityCard } from "@/components/AirQualityCard";
 import { SeaCard } from "@/components/SeaCard";
+import { VigilanceAlertToggle } from "@/components/VigilanceAlertToggle";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Notice } from "@/components/Notice";
@@ -84,6 +86,7 @@ export default function Home() {
   const nextHourRain = useNextHourRain(activeCity);
   const modelScores = useModelScores(activeCity);
   const environment = useEnvironment(activeCity);
+  const alerts = useVigilanceAlerts(vigilance.snapshot, departmentCode, activeCity);
 
   return (
     <div className="space-y-5">
@@ -148,6 +151,14 @@ export default function Home() {
             departmentCode={departmentCode}
             isLoading={vigilance.isLoading}
             className="mt-4"
+          />
+
+          <VigilanceAlertToggle
+            enabled={alerts.enabled}
+            support={alerts.support}
+            departmentCode={departmentCode}
+            onToggle={() => void alerts.toggle()}
+            className="mt-2"
           />
 
           <PreventionCard tempC={currentTempC} className="mt-4" />

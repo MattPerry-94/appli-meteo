@@ -23,12 +23,15 @@ type AppState = {
   citySource: CitySource;
   hasAttemptedBrowserLocation: boolean;
   favorites: FavoriteCity[];
+  /** Alerte de vigilance orange / rouge par notification (désactivée par défaut). */
+  notifyVigilance: boolean;
   setActiveCity: (city: FavoriteCity, source?: CitySource) => void;
   markBrowserLocationAttempted: () => void;
   resetActiveCity: () => void;
   /** Ajoute la ville si elle n'est pas en favori, la retire sinon. */
   toggleFavorite: (city: FavoriteCity) => void;
   removeFavorite: (cityId: string) => void;
+  setNotifyVigilance: (enabled: boolean) => void;
 };
 
 const defaultCity: FavoriteCity = {
@@ -58,6 +61,7 @@ export const useAppStore = create<AppState>()(
       citySource: "default",
       hasAttemptedBrowserLocation: false,
       favorites: [],
+      notifyVigilance: false,
       setActiveCity: (city, source = "manual") => set({ activeCity: city, citySource: source }),
       markBrowserLocationAttempted: () => set({ hasAttemptedBrowserLocation: true }),
       resetActiveCity: () => set({ activeCity: defaultCity, citySource: "default", hasAttemptedBrowserLocation: false }),
@@ -69,6 +73,7 @@ export const useAppStore = create<AppState>()(
           if (state.favorites.length >= MAX_FAVORITES) return {};
           return { favorites: [...state.favorites, city] };
         }),
+      setNotifyVigilance: (enabled) => set({ notifyVigilance: enabled }),
       removeFavorite: (cityId) => set((state) => ({ favorites: state.favorites.filter((favorite) => favorite.id !== cityId) })),
     }),
     {
@@ -86,6 +91,7 @@ export const useAppStore = create<AppState>()(
           hasAttemptedBrowserLocation: state.hasAttemptedBrowserLocation ?? false,
           // La v1 avait déjà une liste de favoris : on la retrouve si elle existe.
           favorites: Array.isArray(state.favorites) ? state.favorites.slice(0, MAX_FAVORITES) : [],
+          notifyVigilance: state.notifyVigilance ?? false,
         };
       },
     },

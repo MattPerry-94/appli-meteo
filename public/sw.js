@@ -147,3 +147,97 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(staleWhileRevalidate(request, SHELL_CACHE));
   }
 });
+
+/* ------------------------------------------------------------------ */
+/* Alertes de vigilance                                                */
+/* ------------------------------------------------------------------ */
+
+// Mêmes adresse et forme que src/services/alertPrefs.ts.
+const PREFS_CACHE = "meteo-prefs";
+const PREFS_URL = "/__meteo/alert-prefs";
+const RISK_LABELS = { 1: "Vent", 2: "Pluie-inondation", 3: "Orages", 4: "Crues", 5: "Neige-verglas", 6: "Canicule", 7: "Grand froid", 8: "Avalanches", 9: "Vagues-submersion" };
+const LEVEL_NAMES = { 1: "verte", 2: "jaune", 3: "orange", 4: "rouge" };
+
+async function readPrefs() {
+  const response = await (await caches.open(PREFS_CACHE)).match(PREFS_URL);
+  return response ? response.json() : null;
+}
+
+async function writePrefs(prefs) {
+  await (await caches.open(PREFS_CACHE)).put(PREFS_URL, new Response(JSON.stringify(prefs), { headers: { "content-type": "application/json" } }));
+}
+
+/**
+ * Version autonome de vigilanceAlertFor (src/utils/vigilanceAlert.ts), sur la
+ * réponse brute de cartevigilance/encours : le worker ne peut pas importer le
+ * code de l'appli. Département et domaine côtier (code + « 10 ») fusionnés.
+ */
+function alertFromCarte(data, code, lastKey) {
+  const periods = (data && data.product && data.product.periods) || [];
+  const ordered = [...periods].sort((a, b) => (a.echeance === "J" ? -1 : 0) - (b.echeance === "J" ? -1 : 0));
+  for (const period of ordered.slice(0, 2)) {
+    const domains = ((period.timelaps && period.timelaps.domain_ids) || []).filter((domain) => {
+      const id = String(domain.domain_id).toUpperCase();
+      return id === code || id === `${code}10`;
+    });
+    if (!domains.length) continue;
+    const level = Math.max(...domains.map((domain) => Number(domain.max_color_id) || 1));
+    if (level < 3) continue;
+
+    const day = String(period.begin_validity_time || period.echeance).slice(0, 10);
+    const key = `${code}:${day}:${level}`;
+    if (key === lastKey) return null;
+
+    const risks = {};
+    for (const domain of domains) {
+      for (const item of domain.phenomenon_items || []) {
+        const id = Number(item.phenomenon_id);
+        risks[id] = Math.max(risks[id] || 1, Number(item.phenomenon_max_color_id) || 1);
+      }
+    }
+    const detail = Object.entries(risks)
+      .filter(([, value]) => value >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id, value]) => `${RISK_LABELS[id]} (${LEVEL_NAMES[value]})`)
+      .join(", ");
+    const label = period.echeance === "J1" ? "Demain" : "Aujourd'hui";
+    return { key, title: `Vigilance ${LEVEL_NAMES[level]} — département ${code}`, body: `${label} : ${detail || "voir le bulletin Météo-France"}.` };
+  }
+  return null;
+}
+
+async function checkVigilance() {
+  const prefs = await readPrefs();
+  if (!prefs || !prefs.enabled || !prefs.departmentCode) return;
+  const response = await fetch("/api/meteofrance/cartevigilance/encours", { cache: "no-store" });
+  if (!response.ok) return;
+  const alert = alertFromCarte(await response.json(), prefs.departmentCode, prefs.lastKey);
+  if (!alert) return;
+  await writePrefs({ ...prefs, lastKey: alert.key });
+  await self.registration.showNotification(alert.title, {
+    body: alert.body,
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: "vigilance",
+    data: { url: prefs.url || "/" },
+  });
+}
+
+// Vérification réveillée par le navigateur quand l'appli est installée
+// (Periodic Background Sync, Chrome Android surtout).
+self.addEventListener("periodicsync", (event) => {
+  if (event.tag === "vigilance") event.waitUntil(checkVigilance());
+});
+
+// Clic sur la notification : on revient sur un onglet ouvert, ou on en ouvre un sur la ville.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const open = clients.find((client) => new URL(client.url).origin === self.location.origin);
+      if (open) return open.focus().then(() => open.navigate(url));
+      return self.clients.openWindow(url);
+    }),
+  );
+});
