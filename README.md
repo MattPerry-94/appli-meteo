@@ -49,6 +49,10 @@ Le dossier `api/` est déployé automatiquement comme fonction Edge. Déclarez
 Aucune autre configuration n'est nécessaire : `npm run build` produit le site
 statique et Vercel route `/api/*` vers la fonction.
 
+Les réponses de Météo-France sont mises en cache 5 minutes sur le CDN de Vercel
+(`s-maxage=300`) : l'API publique est limitée en nombre d'appels par minute, et
+un bulletin ne change que quelques fois par jour.
+
 ## Scripts
 
 | Commande | Effet |

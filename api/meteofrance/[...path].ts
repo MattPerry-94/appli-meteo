@@ -52,7 +52,13 @@ export default async function handler(request: Request): Promise<Response> {
     return problem(502, "Météo-France est injoignable.");
   }
 
-  const headers = new Headers({ "cache-control": "no-store" });
+  // Les bulletins ne changent que quelques fois par jour : le CDN de Vercel
+  // garde la réponse 5 minutes (puis la resert le temps de la rafraîchir),
+  // ce qui évite qu'un appel à Météo-France soit fait pour chaque visiteur —
+  // l'API publique est limitée en nombre d'appels par minute. Le navigateur,
+  // lui, ne met rien en cache (max-age=0). Les erreurs ne sont jamais cachées.
+  const cacheControl = upstream.ok ? "public, max-age=0, s-maxage=300, stale-while-revalidate=600" : "no-store";
+  const headers = new Headers({ "cache-control": cacheControl });
   const contentType = upstream.headers.get("content-type");
   const disposition = upstream.headers.get("content-disposition");
   if (contentType) headers.set("content-type", contentType);
