@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { WeatherIcon } from "@/components/WeatherIcon";
 import type { CityForecastBundle, HourlyForecastPoint } from "@/services/openMeteo";
-import { formatPercent, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
+import { formatMm, formatPercent, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
 
 function pointsForDay(points: HourlyForecastPoint[], dateISO: string) {
@@ -43,8 +43,15 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
                 <div className="min-w-0">
                   <div className="numeric flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
                     <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">{formatTempC(p.tempC)}</span>
-                    <span>Pluie {formatPercent(p.precipProbabilityPct)}</span>
-                    <span>Vent {formatWindKph(p.windKph)}</span>
+                    {p.apparentTempC !== undefined ? <span>ressenti {formatTempC(p.apparentTempC)}</span> : null}
+                    <span>
+                      Pluie {formatPercent(p.precipProbabilityPct)}
+                      {p.precipMm !== undefined && p.precipMm >= 0.1 ? ` · ${formatMm(p.precipMm)}` : ""}
+                    </span>
+                    <span>
+                      Vent {formatWindKph(p.windKph)}
+                      {p.windGustKph !== undefined ? ` (raf. ${formatWindKph(p.windGustKph)})` : ""}
+                    </span>
                     <span>Humidité {formatPercent(p.humidityPct)}</span>
                     <span>
                       UV {formatUv(p.uv)} {uv?.label ? `· ${uv.label}` : ""}

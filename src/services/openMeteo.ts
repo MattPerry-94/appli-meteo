@@ -19,7 +19,10 @@ export type OpenMeteoGeocodingResult = {
 export type CurrentWeather = {
   /** Optionnel : une valeur absente doit rester absente, pas retomber sur 0 °C. */
   tempC?: number;
+  apparentTempC?: number;
   windKph?: number;
+  windGustKph?: number;
+  precipMm?: number;
   humidityPct?: number;
   weatherCode?: number;
   isDay?: boolean;
@@ -31,11 +34,18 @@ export type DailyForecast = {
   dateISO: string;
   tempMinC?: number;
   tempMaxC?: number;
+  apparentTempMinC?: number;
+  apparentTempMaxC?: number;
   precipProbabilityPct?: number;
+  precipSumMm?: number;
   windMaxKph?: number;
+  windGustMaxKph?: number;
   uvMax?: number;
   humidityAvgPct?: number;
   weatherCode?: number;
+  /** Heure locale de la ville, sans fuseau (« 2026-09-23T07:19 »). */
+  sunriseISO?: string;
+  sunsetISO?: string;
   reliability?: ReliabilityLabel | null;
   availableModels?: ForecastSourceId[];
 };
@@ -43,8 +53,11 @@ export type DailyForecast = {
 export type HourlyForecastPoint = {
   timeISO: string;
   tempC?: number;
+  apparentTempC?: number;
   precipProbabilityPct?: number;
+  precipMm?: number;
   windKph?: number;
+  windGustKph?: number;
   uv?: number;
   humidityPct?: number;
   weatherCode?: number;
@@ -139,17 +152,41 @@ function buildUrl(city: FavoriteCity, modelId: ForecastSourceId, includeUv: bool
 
   const hourly = [
     "temperature_2m",
+    "apparent_temperature",
     "precipitation_probability",
+    "precipitation",
     "wind_speed_10m",
+    "wind_gusts_10m",
     "relative_humidity_2m",
     "weather_code",
   ];
   if (includeUv) hourly.push("uv_index");
 
-  const daily = ["temperature_2m_max", "temperature_2m_min", "precipitation_probability_max", "wind_speed_10m_max", "weather_code"];
+  const daily = [
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "apparent_temperature_max",
+    "apparent_temperature_min",
+    "precipitation_probability_max",
+    "precipitation_sum",
+    "wind_speed_10m_max",
+    "wind_gusts_10m_max",
+    "weather_code",
+    "sunrise",
+    "sunset",
+  ];
   if (includeUv) daily.push("uv_index_max");
 
-  const current = ["temperature_2m", "weather_code", "is_day", "wind_speed_10m", "relative_humidity_2m"];
+  const current = [
+    "temperature_2m",
+    "apparent_temperature",
+    "weather_code",
+    "is_day",
+    "wind_speed_10m",
+    "wind_gusts_10m",
+    "precipitation",
+    "relative_humidity_2m",
+  ];
 
   url.searchParams.set("hourly", hourly.join(","));
   url.searchParams.set("daily", daily.join(","));
@@ -173,6 +210,24 @@ function averageByDate(points: HourlyForecastPoint[]) {
   return result;
 }
 
+/** Colonne d'une série Open-Meteo (daily.xxx, hourly.xxx) ; [] si absente. */
+function column(block: Record<string, unknown> | null, key: string): unknown[] {
+  const value = block?.[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function numberAt(values: unknown[], idx: number) {
+  return typeof values[idx] === "number" ? (values[idx] as number) : undefined;
+}
+
+function stringAt(values: unknown[], idx: number) {
+  return typeof values[idx] === "string" ? (values[idx] as string) : undefined;
+}
+
+function numberField(block: Record<string, unknown> | null, key: string) {
+  return typeof block?.[key] === "number" ? (block[key] as number) : undefined;
+}
+
 function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record<string, unknown>): CityForecastBundle {
   const config = MODEL_CONFIG[modelId];
   const timezone = typeof data.timezone === "string" ? data.timezone : "Europe/Paris";
@@ -187,6 +242,12 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
   const precip = Array.isArray(dailyObj?.precipitation_probability_max) ? (dailyObj.precipitation_probability_max as unknown[]) : [];
   const wind = Array.isArray(dailyObj?.wind_speed_10m_max) ? (dailyObj.wind_speed_10m_max as unknown[]) : [];
   const weatherCode = Array.isArray(dailyObj?.weather_code) ? (dailyObj.weather_code as unknown[]) : [];
+  const apparentMax = column(dailyObj, "apparent_temperature_max");
+  const apparentMin = column(dailyObj, "apparent_temperature_min");
+  const precipSum = column(dailyObj, "precipitation_sum");
+  const gustMax = column(dailyObj, "wind_gusts_10m_max");
+  const sunrise = column(dailyObj, "sunrise");
+  const sunset = column(dailyObj, "sunset");
 
   const hourlyObj = typeof data.hourly === "object" && data.hourly ? (data.hourly as Record<string, unknown>) : null;
   const hourlyTime = Array.isArray(hourlyObj?.time) ? (hourlyObj.time as unknown[]) : [];
@@ -196,6 +257,9 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
   const hUv = Array.isArray(hourlyObj?.uv_index) ? (hourlyObj.uv_index as unknown[]) : [];
   const hHumidity = Array.isArray(hourlyObj?.relative_humidity_2m) ? (hourlyObj.relative_humidity_2m as unknown[]) : [];
   const hWeatherCode = Array.isArray(hourlyObj?.weather_code) ? (hourlyObj.weather_code as unknown[]) : [];
+  const hApparent = column(hourlyObj, "apparent_temperature");
+  const hPrecipMm = column(hourlyObj, "precipitation");
+  const hGust = column(hourlyObj, "wind_gusts_10m");
 
   const hourly: HourlyForecastPoint[] = hourlyTime.map((time, idx) => ({
     timeISO: typeof time === "string" ? time : new Date().toISOString(),
@@ -205,6 +269,9 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
     uv: typeof hUv[idx] === "number" ? (hUv[idx] as number) : undefined,
     humidityPct: typeof hHumidity[idx] === "number" ? (hHumidity[idx] as number) : undefined,
     weatherCode: typeof hWeatherCode[idx] === "number" ? (hWeatherCode[idx] as number) : undefined,
+    apparentTempC: numberAt(hApparent, idx),
+    precipMm: numberAt(hPrecipMm, idx),
+    windGustKph: numberAt(hGust, idx),
   }));
 
   const humidityByDate = averageByDate(hourly);
@@ -220,6 +287,12 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
       windMaxKph: typeof wind[idx] === "number" ? (wind[idx] as number) : undefined,
       humidityAvgPct: humidityByDate.get(dateISO),
       weatherCode: typeof weatherCode[idx] === "number" ? (weatherCode[idx] as number) : undefined,
+      apparentTempMaxC: numberAt(apparentMax, idx),
+      apparentTempMinC: numberAt(apparentMin, idx),
+      precipSumMm: numberAt(precipSum, idx),
+      windGustMaxKph: numberAt(gustMax, idx),
+      sunriseISO: stringAt(sunrise, idx),
+      sunsetISO: stringAt(sunset, idx),
     };
   });
 
@@ -230,6 +303,9 @@ function parseBundle(city: FavoriteCity, modelId: ForecastSourceId, data: Record
         humidityPct: typeof currentObj.relative_humidity_2m === "number" ? currentObj.relative_humidity_2m : undefined,
         weatherCode: typeof currentObj.weather_code === "number" ? currentObj.weather_code : undefined,
         isDay: typeof currentObj.is_day === "number" ? currentObj.is_day === 1 : undefined,
+        apparentTempC: numberField(currentObj, "apparent_temperature"),
+        windGustKph: numberField(currentObj, "wind_gusts_10m"),
+        precipMm: numberField(currentObj, "precipitation"),
       }
     : undefined;
 
@@ -307,7 +383,10 @@ function buildConsensusCurrent(city: FavoriteCity, models: Record<ForecastSource
 
   return {
     tempC: averageDefined(entries.map((entry) => entry.current?.tempC)),
+    apparentTempC: averageDefined(entries.map((entry) => entry.current?.apparentTempC)),
     windKph: averageDefined(entries.map((entry) => entry.current?.windKph)),
+    windGustKph: averageDefined(entries.map((entry) => entry.current?.windGustKph)),
+    precipMm: averageDefined(entries.map((entry) => entry.current?.precipMm)),
     humidityPct: averageDefined(entries.map((entry) => entry.current?.humidityPct)),
     weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.current?.weatherCode)),
     isDay: entries.find((entry) => typeof entry.current?.isDay === "boolean")?.current?.isDay,
@@ -335,8 +414,15 @@ function buildConsensusDaily(models: Record<ForecastSourceId, CityForecastBundle
       dateISO,
       tempMinC: averageDefined(entries.map((entry) => entry.day.tempMinC)),
       tempMaxC: averageDefined(entries.map((entry) => entry.day.tempMaxC)),
+      apparentTempMinC: averageDefined(entries.map((entry) => entry.day.apparentTempMinC)),
+      apparentTempMaxC: averageDefined(entries.map((entry) => entry.day.apparentTempMaxC)),
       precipProbabilityPct: averageDefined(entries.map((entry) => entry.day.precipProbabilityPct)),
+      precipSumMm: averageDefined(entries.map((entry) => entry.day.precipSumMm)),
       windMaxKph: averageDefined(entries.map((entry) => entry.day.windMaxKph)),
+      windGustMaxKph: averageDefined(entries.map((entry) => entry.day.windGustMaxKph)),
+      // Donnée astronomique : identique d'un modèle à l'autre à la minute près.
+      sunriseISO: entries.find((entry) => entry.day.sunriseISO)?.day.sunriseISO,
+      sunsetISO: entries.find((entry) => entry.day.sunsetISO)?.day.sunsetISO,
       uvMax: averageDefined(entries.map((entry) => entry.day.uvMax)),
       humidityAvgPct: averageDefined(entries.map((entry) => entry.day.humidityAvgPct)),
       weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.day.weatherCode)),
@@ -367,8 +453,11 @@ function buildConsensusHourly(models: Record<ForecastSourceId, CityForecastBundl
     return {
       timeISO,
       tempC: averageDefined(entries.map((entry) => entry.point.tempC)),
+      apparentTempC: averageDefined(entries.map((entry) => entry.point.apparentTempC)),
       precipProbabilityPct: averageDefined(entries.map((entry) => entry.point.precipProbabilityPct)),
+      precipMm: averageDefined(entries.map((entry) => entry.point.precipMm)),
       windKph: averageDefined(entries.map((entry) => entry.point.windKph)),
+      windGustKph: averageDefined(entries.map((entry) => entry.point.windGustKph)),
       uv: averageDefined(entries.map((entry) => entry.point.uv)),
       humidityPct: averageDefined(entries.map((entry) => entry.point.humidityPct)),
       weatherCode: chooseRepresentativeWeatherCode(entries.map((entry) => entry.point.weatherCode)),

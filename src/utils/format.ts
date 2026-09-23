@@ -13,6 +13,13 @@ export function formatWindKph(value: number | undefined) {
   return `${Math.round(value)} km/h`;
 }
 
+/** Cumul de pluie : une décimale, virgule française ; les traces comptent pour 0. */
+export function formatMm(value: number | undefined) {
+  if (value === undefined || Number.isNaN(value)) return "—";
+  if (value < 0.1) return "0 mm";
+  return `${(Math.round(value * 10) / 10).toString().replace(".", ",")} mm`;
+}
+
 export function formatUv(value: number | undefined) {
   if (value === undefined || Number.isNaN(value)) return "—";
   return value.toFixed(1).replace(".", ",");

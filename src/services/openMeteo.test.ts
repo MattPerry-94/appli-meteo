@@ -96,4 +96,31 @@ describe("fetchForecastModelSet", () => {
     expect(set.models.gfs.unavailable).toBeUndefined();
     expect(set.consensus.current?.tempC).toBe(20);
   });
+  it("lit ressenti, rafales, cumul et soleil, et les moyenne dans le consensus", async () => {
+    mockFetch((url) => {
+      const gust = url.includes("ecmwf") ? 40 : 20;
+      return {
+        timezone: "Europe/Paris",
+        current: { temperature_2m: 20, apparent_temperature: 18, wind_gusts_10m: gust, precipitation: 0 },
+        daily: {
+          time: ["2026-09-23"],
+          temperature_2m_max: [24],
+          temperature_2m_min: [15],
+          precipitation_sum: [url.includes("gfs") ? 3 : 0],
+          wind_gusts_10m_max: [gust],
+          sunrise: ["2026-09-23T07:19"],
+          sunset: ["2026-09-23T19:27"],
+        },
+        hourly: { time: ["2026-09-23T12:00"], temperature_2m: [22], apparent_temperature: [21], precipitation: [0.4] },
+      };
+    });
+
+    const set = await fetchForecastModelSet(city);
+
+    expect(set.consensus.current?.apparentTempC).toBe(18);
+    expect(set.consensus.current?.windGustKph).toBeCloseTo(80 / 3);
+    expect(set.consensus.daily[0].precipSumMm).toBe(1);
+    expect(set.consensus.daily[0].sunriseISO).toBe("2026-09-23T07:19");
+    expect(set.consensus.hourly[0].precipMm).toBeCloseTo(0.4);
+  });
 });

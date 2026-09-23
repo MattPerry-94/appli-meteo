@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTempC, formatUv } from "@/utils/format";
+import { formatMm, formatTempC, formatUv } from "@/utils/format";
 
 describe("format", () => {
   it("formatTempC arrondit et ajoute le symbole", () => {
@@ -14,6 +14,12 @@ describe("format", () => {
   it("formatUv utilise la virgule", () => {
     expect(formatUv(6)).toBe("6,0");
     expect(formatUv(8.25)).toBe("8,3");
+  });
+  it("formatMm arrondit au dixième et ignore les traces", () => {
+    expect(formatMm(1.26)).toBe("1,3 mm");
+    expect(formatMm(12)).toBe("12 mm");
+    expect(formatMm(0.04)).toBe("0 mm");
+    expect(formatMm(undefined)).toBe("—");
   });
 });
 

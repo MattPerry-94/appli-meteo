@@ -1,9 +1,10 @@
+import { Sunrise, Sunset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WeatherIcon } from "@/components/WeatherIcon";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import type { CityForecastBundle } from "@/services/openMeteo";
-import { formatTempC, formatUv } from "@/utils/format";
+import { formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
 
 export function CityCard(props: { bundle: CityForecastBundle | null; selected?: boolean; onSelect?: () => void }) {
@@ -53,6 +54,26 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
               <span className="font-semibold text-slate-700 dark:text-zinc-200">{formatTempC(today?.tempMinC)}</span>
               <span className="px-1 text-slate-300 dark:text-zinc-600">→</span>
               <span className="font-semibold text-slate-700 dark:text-zinc-200">{formatTempC(today?.tempMaxC)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="numeric mt-4 grid grid-cols-3 gap-2 text-xs text-slate-500 dark:text-zinc-400">
+          <div>
+            <div className="eyebrow">Ressenti</div>
+            <div className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-zinc-100">{formatTempC(current?.apparentTempC)}</div>
+          </div>
+          <div>
+            <div className="eyebrow">Rafales</div>
+            <div className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-zinc-100">{formatWindKph(current?.windGustKph)}</div>
+          </div>
+          <div>
+            <div className="eyebrow">Soleil</div>
+            <div className="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-slate-800 dark:text-zinc-100">
+              <Sunrise className="accent-ink size-3.5" aria-label="Lever" />
+              {today?.sunriseISO ? formatTimeHHmmFromISODateTime(today.sunriseISO) : "—"}
+              <Sunset className="accent-ink ml-1 size-3.5" aria-label="Coucher" />
+              {today?.sunsetISO ? formatTimeHHmmFromISODateTime(today.sunsetISO) : "—"}
             </div>
           </div>
         </div>

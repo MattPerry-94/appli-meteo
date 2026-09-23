@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Sunrise, Sunset } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { WeatherIcon } from "@/components/WeatherIcon";
@@ -7,7 +7,16 @@ import { Badge } from "@/components/Badge";
 import { HourlyDetails } from "@/components/HourlyDetails";
 import type { CityForecastModelSet, ForecastSourceId, ForecastViewId } from "@/services/openMeteo";
 import { getForecastViewLabel } from "@/services/openMeteo";
-import { formatDayLong, formatDayShort, formatPercent, formatTempC, formatUv, formatWindKph } from "@/utils/format";
+import {
+  formatDayLong,
+  formatDayShort,
+  formatMm,
+  formatPercent,
+  formatTempC,
+  formatTimeHHmmFromISODateTime,
+  formatUv,
+  formatWindKph,
+} from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
 
 const views: ForecastViewId[] = ["consensus", "arome", "gfs", "ecmwf"];
@@ -117,6 +126,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                       <span className="text-slate-300 dark:text-zinc-700">•</span>
                       <span>
                         Pluie {day.precipProbabilityPct === undefined ? missingModelText : formatPercent(day.precipProbabilityPct)}
+                        {day.precipSumMm !== undefined && day.precipSumMm >= 0.1 ? ` · ${formatMm(day.precipSumMm)}` : ""}
                       </span>
                       <span className="text-slate-300 dark:text-zinc-700">•</span>
                       <span>Vent {day.windMaxKph === undefined ? missingModelText : formatWindKph(day.windMaxKph)}</span>
@@ -201,12 +211,14 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
               <div className="numeric mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
                 {active?.precipProbabilityPct === undefined ? missingModelText : formatPercent(active.precipProbabilityPct)}
               </div>
+              <div className="numeric mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Cumul {formatMm(active?.precipSumMm)}</div>
             </div>
             <div className="tile rounded-2xl p-3.5">
               <div className="eyebrow">Vent (max)</div>
               <div className="numeric mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
                 {active?.windMaxKph === undefined ? missingModelText : formatWindKph(active.windMaxKph)}
               </div>
+              <div className="numeric mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Rafales {formatWindKph(active?.windGustMaxKph)}</div>
             </div>
           </div>
 
@@ -221,6 +233,25 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
               <div className="eyebrow">Sources prises en compte</div>
               <div className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
                 {active?.availableModels?.length ? active.availableModels.map((model) => getForecastViewLabel(model)).join(", ") : "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="tile rounded-2xl p-3.5">
+              <div className="eyebrow">Ressenti</div>
+              <div className="numeric mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
+                {formatTempC(active?.apparentTempMinC)} <span className="font-normal text-slate-300 dark:text-zinc-600">→</span>{" "}
+                {formatTempC(active?.apparentTempMaxC)}
+              </div>
+            </div>
+            <div className="tile rounded-2xl p-3.5">
+              <div className="eyebrow">Soleil</div>
+              <div className="numeric mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
+                <Sunrise className="accent-ink size-4" aria-label="Lever" />
+                {active?.sunriseISO ? formatTimeHHmmFromISODateTime(active.sunriseISO) : "—"}
+                <Sunset className="accent-ink ml-1 size-4" aria-label="Coucher" />
+                {active?.sunsetISO ? formatTimeHHmmFromISODateTime(active.sunsetISO) : "—"}
               </div>
             </div>
           </div>
