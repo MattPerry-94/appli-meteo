@@ -11,6 +11,20 @@
     <meta name="theme-color" content="#f6f8fc" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#070a12" media="(prefers-color-scheme: dark)" />
     <title>Appli Météo</title>
+    <script>
+      // Pose le thème avant le premier rendu, pour éviter le flash blanc en
+      // mode sombre. Même logique que src/hooks/useTheme.ts.
+      (function () {
+        var theme = "light";
+        try {
+          var saved = localStorage.getItem("theme");
+          if (saved === "light" || saved === "dark") theme = saved;
+          else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) theme = "dark";
+        } catch (e) {}
+        document.documentElement.classList.add(theme);
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {

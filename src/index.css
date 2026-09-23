@@ -94,6 +94,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.011em;
+    /* Fond visible avant le montage de React (memes teintes que la meta
+       theme-color) : le fond anime d'AppShell vient se poser par-dessus. */
+    background-color: #f6f8fc;
+  }
+
+  .dark body {
+    background-color: #070a12;
   }
 
   ::selection {
