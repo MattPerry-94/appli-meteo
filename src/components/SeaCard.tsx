@@ -14,7 +14,7 @@ export function SeaCard(props: { sea: SeaState | null }) {
   const direction = compassFrench(sea.waveDirectionDeg);
 
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="eyebrow">Mer</div>
       <div className="display mt-1 text-2xl">Vagues et eau</div>
 

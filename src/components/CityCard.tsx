@@ -26,7 +26,7 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
     >
       <Card
         className={cn(
-          "h-full overflow-hidden p-5",
+          "h-full overflow-hidden p-4 sm:p-5",
           isInteractive && "surface-hover",
           props.selected && "accent-edge accent-wash",
         )}
@@ -77,11 +77,16 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
           </div>
           <div>
             <div className="eyebrow">Soleil</div>
-            <div className="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-slate-800 dark:text-zinc-100">
-              <Sunrise className="accent-ink size-3.5" aria-label="Lever" />
-              {today?.sunriseISO ? formatTimeHHmmFromISODateTime(today.sunriseISO) : "—"}
-              <Sunset className="accent-ink ml-1 size-3.5" aria-label="Coucher" />
-              {today?.sunsetISO ? formatTimeHHmmFromISODateTime(today.sunsetISO) : "—"}
+            {/* Lever et coucher l'un sous l'autre sur téléphone : côte à côte, ils débordaient. */}
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-semibold text-slate-800 dark:text-zinc-100">
+              <span className="inline-flex items-center gap-1">
+                <Sunrise className="accent-ink size-3.5 shrink-0" aria-label="Lever" />
+                {today?.sunriseISO ? formatTimeHHmmFromISODateTime(today.sunriseISO) : "—"}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Sunset className="accent-ink size-3.5 shrink-0" aria-label="Coucher" />
+                {today?.sunsetISO ? formatTimeHHmmFromISODateTime(today.sunsetISO) : "—"}
+              </span>
             </div>
           </div>
         </div>

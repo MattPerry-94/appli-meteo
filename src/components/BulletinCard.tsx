@@ -17,7 +17,7 @@ export function BulletinCard(props: { bulletin: MeteoFranceDepartmentBulletin | 
   const { bulletin } = props;
 
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="eyebrow">Bulletin Météo-France</div>

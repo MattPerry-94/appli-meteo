@@ -56,7 +56,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -101,7 +101,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                   aria-expanded={isOpen}
                   onClick={() => setOpenIndex(idx)}
                   className={cn(
-                    "relative grid w-full grid-cols-[64px_28px_minmax(0,1fr)] items-center gap-3 px-4 py-3.5 text-left transition-colors sm:grid-cols-[64px_28px_1fr_auto]",
+                    "relative grid w-full grid-cols-[28px_minmax(0,1fr)] items-center gap-3 px-4 py-3.5 text-left transition-colors sm:grid-cols-[64px_28px_1fr_auto]",
                     idx > 0 && "border-t border-slate-900/[0.06] dark:border-white/[0.07]",
                     "hover:bg-slate-900/[0.035] dark:hover:bg-white/[0.05]",
                     isOpen && "accent-wash",
@@ -111,7 +111,8 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     <span className="accent-bar absolute inset-y-1.5 left-0 w-1 rounded-full" />
                   ) : null}
 
-                  <div className="eyebrow">{formatDayShort(day.dateISO)}</div>
+                  {/* Sur téléphone, la date complète juste à côté suffit. */}
+                  <div className="eyebrow hidden sm:block">{formatDayShort(day.dateISO)}</div>
 
                   <WeatherIcon kind={dayVisual.kind} className="accent-ink" />
 
@@ -143,7 +144,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     </div>
                   </div>
 
-                  <div className="col-start-3 row-start-2 flex items-center justify-between gap-2 sm:col-auto sm:row-auto sm:justify-end">
+                  <div className="col-start-2 row-start-2 flex items-center justify-between gap-2 sm:col-auto sm:row-auto sm:justify-end">
                     {activeView === "consensus" ? (
                       <Badge tone="zinc" className="inline-flex max-w-full shrink-0">
                         {day.reliability ?? "—"}
@@ -173,7 +174,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
         )}
       </Card>
 
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="eyebrow">Détails</div>
@@ -201,17 +202,18 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
 
             <div className="tile rounded-2xl p-3.5">
               <div className="eyebrow">{activeView === "consensus" ? "Fiabilité" : "Indice UV"}</div>
-              <div className="mt-1.5 flex items-center justify-between gap-2">
-                <div className="text-sm font-semibold text-slate-900 dark:text-zinc-50">
-                  {activeView === "consensus"
-                    ? active?.reliability ?? "—"
-                    : active?.uvMax === undefined
-                      ? missingModelText
-                      : `UV ${formatUv(active.uvMax)}${uv?.label ? ` · ${uv.label}` : ""}`}
-                </div>
+              {/* Le texte et la pastille répétaient la même information : une seule suffit. */}
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 {activeView === "consensus" ? (
-                  <Badge tone="zinc">{active?.reliability ?? "—"}</Badge>
-                ) : active?.uvMax !== undefined ? <Badge tone={uv?.tone ?? "zinc"}>{uv?.label ?? "—"}</Badge> : null}
+                  <div className="text-sm font-semibold text-slate-900 dark:text-zinc-50">{active?.reliability ?? "—"}</div>
+                ) : active?.uvMax === undefined ? (
+                  <div className="text-sm font-semibold text-slate-900 dark:text-zinc-50">{missingModelText}</div>
+                ) : (
+                  <>
+                    <div className="numeric text-sm font-semibold text-slate-900 dark:text-zinc-50">UV {formatUv(active.uvMax)}</div>
+                    <Badge tone={uv?.tone ?? "zinc"}>{uv?.label ?? "—"}</Badge>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -264,11 +266,15 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
             </div>
             <div className="tile rounded-2xl p-3.5">
               <div className="eyebrow">Soleil</div>
-              <div className="numeric mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
-                <Sunrise className="accent-ink size-4" aria-label="Lever" />
-                {active?.sunriseISO ? formatTimeHHmmFromISODateTime(active.sunriseISO) : "—"}
-                <Sunset className="accent-ink ml-1 size-4" aria-label="Coucher" />
-                {active?.sunsetISO ? formatTimeHHmmFromISODateTime(active.sunsetISO) : "—"}
+              <div className="numeric mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm font-semibold text-slate-900 dark:text-zinc-50">
+                <span className="inline-flex items-center gap-1.5">
+                  <Sunrise className="accent-ink size-4 shrink-0" aria-label="Lever" />
+                  {active?.sunriseISO ? formatTimeHHmmFromISODateTime(active.sunriseISO) : "—"}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Sunset className="accent-ink size-4 shrink-0" aria-label="Coucher" />
+                  {active?.sunsetISO ? formatTimeHHmmFromISODateTime(active.sunsetISO) : "—"}
+                </span>
               </div>
             </div>
           </div>
@@ -290,11 +296,12 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                   return (
                     <div
                       key={item.modelId}
-                      className="tile tile-interactive grid grid-cols-[80px_22px_1fr] items-center gap-3 rounded-xl px-3 py-2.5"
+                      className="tile tile-interactive grid grid-cols-[22px_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 sm:grid-cols-[80px_22px_minmax(0,1fr)]"
                     >
-                      <div className="text-xs font-bold text-slate-700 dark:text-zinc-200">{item.label}</div>
-                      <WeatherIcon kind={itemVisual.kind} className="accent-ink" />
-                      <div className="numeric text-xs text-slate-500 dark:text-zinc-400">
+                      {/* Téléphone : icône + modèle, puis le détail sur toute la largeur. */}
+                      <div className="col-start-2 row-start-1 text-xs font-bold text-slate-700 dark:text-zinc-200 sm:col-start-1">{item.label}</div>
+                      <WeatherIcon kind={itemVisual.kind} className="accent-ink col-start-1 row-start-1 sm:col-start-2" />
+                      <div className="numeric col-span-2 text-xs text-slate-500 dark:text-zinc-400 sm:col-span-1 sm:col-start-3 sm:row-start-1">
                         {item.day ? (
                           <>
                             <span className="font-semibold text-slate-800 dark:text-zinc-100">{itemVisual.label}</span>

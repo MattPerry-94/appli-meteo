@@ -25,7 +25,7 @@ export function ModelScoreCard(props: { report: ModelScoreReport | null; isLoadi
   const worst = Math.max(...scores.map((score) => score.maeC), 0.1);
 
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="eyebrow">Qui a vu juste ?</div>
       <div className="display mt-1 text-2xl">Score des modèles</div>
       {props.report ? (
@@ -56,7 +56,7 @@ export function ModelScoreCard(props: { report: ModelScoreReport | null; isLoadi
                     style={{ width: `${Math.max((score.maeC / worst) * 100, 4)}%` }}
                   />
                 </span>
-                <span className="mt-1 block truncate text-[11px] text-slate-500 dark:text-zinc-400">{describeBias(score.biasC)}</span>
+                <span className="mt-1 block text-[11px] leading-snug text-slate-500 dark:text-zinc-400">{describeBias(score.biasC)}</span>
               </span>
               <span className="numeric text-right text-sm font-semibold text-slate-800 dark:text-zinc-100">{formatDegrees(score.maeC)}</span>
             </li>

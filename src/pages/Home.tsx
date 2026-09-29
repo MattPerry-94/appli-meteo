@@ -48,7 +48,7 @@ function formatSavedAt(date: Date) {
 
 function SkeletonCard() {
   return (
-    <Card className="h-[150px] p-5">
+    <Card className="h-[150px] p-4 sm:p-5">
       <div className="space-y-3">
         <div className="skeleton h-4 w-40 rounded-md" />
         <div className="skeleton h-3 w-56 rounded-md" />
@@ -99,14 +99,18 @@ export default function Home() {
       />
 
       <section className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card className="p-5">
-          <div className="flex items-start justify-between gap-4">
+        <Card className="p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
             <div className="min-w-0">
               <div className="eyebrow">Ville active</div>
-              <div className="display mt-1 truncate text-2xl">{activeCity.name}</div>
+              {/* Pas de troncature : un nom long revient à la ligne (aux tirets d'abord). */}
+              <div className="display mt-1 break-words text-2xl">{activeCity.name}</div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <Badge tone="zinc">{sourceLabel(citySource)}</Badge>
+              {/* Information secondaire : on la sacrifie sur petit écran pour laisser la place au nom. */}
+              <Badge tone="zinc" className="hidden sm:inline-flex">
+                {sourceLabel(citySource)}
+              </Badge>
               <ShareCityButton city={activeCity} />
               <button
                 type="button"

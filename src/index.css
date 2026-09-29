@@ -114,6 +114,15 @@
     border-radius: 0.9rem;
   }
 
+  /*
+   * Une colonne de grille prend par défaut la largeur de son contenu le plus
+   * long : sur téléphone, les cartes débordaient de l'écran. Les enfants de
+   * grille peuvent rétrécir, leur contenu revient à la ligne.
+   */
+  .grid > * {
+    min-width: 0;
+  }
+
   /* Slim scrollbars */
   * {
     scrollbar-width: thin;

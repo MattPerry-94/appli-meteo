@@ -34,13 +34,14 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
             return (
               <div
                 key={p.timeISO}
-                className="tile tile-interactive grid grid-cols-[52px_24px_1fr] items-center gap-3 rounded-xl px-3 py-2"
+                className="tile tile-interactive grid grid-cols-[auto_24px_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 rounded-xl px-3 py-2 sm:grid-cols-[52px_24px_minmax(0,1fr)]"
               >
                 <div className="numeric text-xs font-bold text-slate-700 dark:text-zinc-200">
                   {formatTimeHHmmFromISODateTime(p.timeISO)}
                 </div>
                 <WeatherIcon kind={v.kind} className="accent-ink" />
-                <div className="min-w-0">
+                {/* Téléphone : heure + icône en tête, le détail sur toute la largeur en dessous. */}
+                <div className="col-span-3 min-w-0 sm:col-span-1">
                   <div className="numeric flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
                     <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">
                       {formatTempC(p.tempC)}

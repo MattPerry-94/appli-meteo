@@ -34,7 +34,7 @@ export function AirQualityCard(props: { air: AirQuality | null }) {
   const hasPollenData = Object.keys(air.pollens).length > 0;
 
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="eyebrow">Air et pollens</div>
       <div className="display mt-1 text-2xl">Qualité de l'air</div>
 

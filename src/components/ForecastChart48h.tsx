@@ -98,7 +98,7 @@ export function ForecastChart48h(props: { forecastSet: CityForecastModelSet | nu
 
   if (!consensus || !points.length || !scale) {
     return (
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <div className="eyebrow">Prochaines 48 h</div>
         <div className="skeleton mt-4 h-[180px] rounded-2xl" />
       </Card>
@@ -136,7 +136,7 @@ export function ForecastChart48h(props: { forecastSet: CityForecastModelSet | nu
   const tooltipLeft = hoverIndex !== null ? Math.min(Math.max(x(hoverIndex) / width, 0.12), 0.88) * 100 : 0;
 
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="eyebrow">Prochaines 48 h</div>

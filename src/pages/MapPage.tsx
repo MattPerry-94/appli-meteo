@@ -99,7 +99,7 @@ export default function MapPage() {
 
   return (
     <div className="space-y-5">
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <div className="eyebrow">Carte météo</div>
@@ -139,7 +139,7 @@ export default function MapPage() {
       {activeTab === "radar" ? (
         <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
           <div className="space-y-5">
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="eyebrow">Cartes météo</div>
@@ -174,7 +174,7 @@ export default function MapPage() {
               </div>
             </Card>
 
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="eyebrow">Zone suivie</div>
@@ -205,7 +205,7 @@ export default function MapPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <div className="eyebrow">Vigilances Météo-France</div>
@@ -247,7 +247,7 @@ export default function MapPage() {
             ) : null}
           </Card>
 
-          <Card className="p-5">
+          <Card className="p-4 sm:p-5">
             {vigilance.snapshot ? (
               <VigilanceMap snapshot={vigilance.snapshot} highlightCode={departmentCode} />
             ) : (
