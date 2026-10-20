@@ -1,3 +1,7 @@
+// Polices servies avec l'appli (et non par Google Fonts) : pas de requête
+// externe qui bloque l'affichage, et disponibles hors connexion.
+import '@fontsource-variable/fraunces/opsz.css'
+import '@fontsource-variable/manrope'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'

@@ -48,7 +48,9 @@ function formatSavedAt(date: Date) {
 
 function SkeletonCard() {
   return (
-    <Card className="h-[150px] p-4 sm:p-5">
+    // Hauteur de la vraie carte (mesurée : ~280 px sur téléphone, ~230 px au-delà) :
+    // le contenu en dessous ne saute pas à l'arrivée des prévisions.
+    <Card className="h-[270px] p-4 sm:h-[232px] sm:p-5">
       <div className="space-y-3">
         <div className="skeleton h-4 w-40 rounded-md" />
         <div className="skeleton h-3 w-56 rounded-md" />

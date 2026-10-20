@@ -9,7 +9,6 @@
  * - Données météo (Open-Meteo, relais Météo-France) : réseau d'abord avec un
  *   délai de 8 s, puis la dernière réponse enregistrée pour la même adresse.
  *   Une ville déjà consultée reste lisible sans connexion.
- * - Polices Google : servies depuis le cache puis rafraîchies en arrière-plan.
  *
  * Changer VERSION invalide les caches du site à la prochaine visite.
  */
@@ -27,7 +26,6 @@ const DATA_HOSTS = new Set([
   "previous-runs-api.open-meteo.com",
   "archive-api.open-meteo.com",
 ]);
-const FONT_HOSTS = new Set(["fonts.googleapis.com", "fonts.gstatic.com"]);
 const NETWORK_TIMEOUT_MS = 8000;
 /*
  * Une réponse récupérée pour la page (voir « cache-urls ») l'est sans en-tête
@@ -116,18 +114,6 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request, MATCH);
-  const refresh = fetch(request)
-    .then((response) => {
-      if (response.ok || response.type === "opaque") cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => cached);
-  return cached || refresh;
-}
-
 /** Stratégie de cache d'une requête, ou null si le service worker la laisse passer. */
 function strategyFor(request, isNavigation) {
   const url = new URL(request.url);
@@ -138,7 +124,6 @@ function strategyFor(request, isNavigation) {
     return null;
   }
   if (DATA_HOSTS.has(url.hostname)) return () => networkFirst(request, DATA_CACHE);
-  if (FONT_HOSTS.has(url.hostname)) return () => staleWhileRevalidate(request, SHELL_CACHE);
   return null;
 }
 

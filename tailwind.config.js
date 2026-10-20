@@ -9,8 +9,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Manrope", "ui-sans-serif", "system-ui", "-apple-system", '"Segoe UI"', "Helvetica", "Arial", '"Apple Color Emoji"', '"Segoe UI Emoji"'],
-        serif: ["Fraunces", "ui-serif", "Georgia", "Cambria", '"Times New Roman"', "Times", "serif"],
+        sans: ["\"Manrope Variable\"", "Manrope", "ui-sans-serif", "system-ui", "-apple-system", '"Segoe UI"', "Helvetica", "Arial", '"Apple Color Emoji"', '"Segoe UI Emoji"'],
+        serif: ["\"Fraunces Variable\"", "Fraunces", "ui-serif", "Georgia", "Cambria", '"Times New Roman"', "Times", "serif"],
       },
       borderRadius: {
         "4xl": "1.75rem",

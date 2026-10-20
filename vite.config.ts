@@ -46,9 +46,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react({
         babel: {
-          plugins: [
-            'react-dev-locator',
-          ],
+          // Repérage des composants dans l'éditeur : utile en développement
+          // seulement. En production il ajoutait des attributs
+          // trae-inspector-* sur chaque élément (plus de 2 000 dans le bundle).
+          plugins: mode === 'development' ? ['react-dev-locator'] : [],
         },
       }),
       tsconfigPaths()
