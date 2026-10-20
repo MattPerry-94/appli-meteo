@@ -113,9 +113,33 @@ un bulletin ne change que quelques fois par jour.
 | `npm run check` | Typecheck seul. |
 | `npm run lint` | ESLint. |
 | `npm test` | Tests unitaires (Vitest). |
+| `npm run e2e` | Tests de bout en bout (Playwright) sur le build de production. |
+| `npm run e2e:record` | Réenregistre les réponses réseau rejouées par ces tests. |
 
 La CI GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) enchaîne
-lint, typecheck, tests et build à chaque push sur `main` et sur les pull requests.
+lint, typecheck, tests et build à chaque push sur `main` et sur les pull requests,
+puis les tests de bout en bout dans un second job.
+
+### Tests de bout en bout
+
+Le dossier [e2e/](e2e) contient trente tests Playwright :
+
+- les parcours : recherche, lien partagé, partage, favoris, thème, carte des vigilances ;
+- l'affichage de 320 à 1280 px, sans débordement ni texte coupé ;
+- l'accessibilité WCAG 2.1 AA (axe-core), le contraste mesuré y compris sur les surfaces translucides, et le focus au clavier ;
+- le service worker : réouverture hors connexion et alerte de vigilance.
+
+Les réponses d'Open-Meteo et de Météo-France sont rejouées depuis
+[e2e/fixtures/network.json](e2e/fixtures/network.json), et l'horloge des pages
+est reculée à l'heure de l'enregistrement. Ainsi, la CI n'a besoin ni de la clé
+Météo-France ni du réseau. Pour réenregistrer ces réponses, par exemple quand
+une API change de format :
+
+```bash
+npx playwright install chromium   # une fois
+npm run dev -- --port 5199        # avec METEOFRANCE_API_KEY dans .env
+npm run e2e:record
+```
 
 ## Architecture
 
