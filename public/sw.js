@@ -29,6 +29,12 @@ const DATA_HOSTS = new Set([
 ]);
 const FONT_HOSTS = new Set(["fonts.googleapis.com", "fonts.gstatic.com"]);
 const NETWORK_TIMEOUT_MS = 8000;
+/*
+ * Une réponse récupérée pour la page (voir « cache-urls ») l'est sans en-tête
+ * Origin ; le navigateur, lui, en envoie un pour les scripts modules. Avec un
+ * « Vary: Origin » côté serveur, elle ne serait jamais retrouvée.
+ */
+const MATCH = { ignoreVary: true };
 /** Au-delà, les réponses les plus anciennes sont supprimées (villes plus consultées, jours passés). */
 const DATA_CACHE_MAX_ENTRIES = 80;
 
@@ -96,14 +102,14 @@ async function networkFirst(request, cacheName, fallbackUrl) {
     }
     return response;
   } catch (error) {
-    const cached = (await cache.match(request)) || (fallbackUrl && (await caches.match(fallbackUrl)));
+    const cached = (await cache.match(request, MATCH)) || (fallbackUrl && (await caches.match(fallbackUrl, MATCH)));
     if (cached) return cached;
     throw error;
   }
 }
 
 async function cacheFirst(request, cacheName) {
-  const cached = await caches.match(request);
+  const cached = await caches.match(request, MATCH);
   if (cached) return cached;
   const response = await fetch(request);
   if (response.ok) (await caches.open(cacheName)).put(request, response.clone());
@@ -112,7 +118,7 @@ async function cacheFirst(request, cacheName) {
 
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  const cached = await cache.match(request, MATCH);
   const refresh = fetch(request)
     .then((response) => {
       if (response.ok || response.type === "opaque") cache.put(request, response.clone());
@@ -122,30 +128,45 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || refresh;
 }
 
+/** Stratégie de cache d'une requête, ou null si le service worker la laisse passer. */
+function strategyFor(request, isNavigation) {
+  const url = new URL(request.url);
+  if (isNavigation) return () => networkFirst(request, SHELL_CACHE, "/");
+  if (url.origin === self.location.origin) {
+    if (url.pathname.startsWith("/assets/")) return () => cacheFirst(request, SHELL_CACHE);
+    if (url.pathname.startsWith("/api/meteofrance")) return () => networkFirst(request, DATA_CACHE);
+    return null;
+  }
+  if (DATA_HOSTS.has(url.hostname)) return () => networkFirst(request, DATA_CACHE);
+  if (FONT_HOSTS.has(url.hostname)) return () => staleWhileRevalidate(request, SHELL_CACHE);
+  return null;
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
-  const url = new URL(request.url);
+  const strategy = strategyFor(request, request.mode === "navigate");
+  if (strategy) event.respondWith(strategy());
+});
 
-  if (request.mode === "navigate") {
-    event.respondWith(networkFirst(request, SHELL_CACHE, "/"));
-    return;
+/*
+ * Première visite : la page signale ce qu'elle a chargé avant que le worker
+ * ne la contrôle. On le récupère selon les mêmes règles pour que l'appli
+ * rouvre hors connexion dès la première fois.
+ */
+self.addEventListener("message", (event) => {
+  if (!event.data || event.data.type !== "cache-urls" || !Array.isArray(event.data.urls)) return;
+  const { page, urls } = event.data;
+  const tasks = [];
+  if (typeof page === "string" && new URL(page).origin === self.location.origin) {
+    tasks.push(strategyFor(new Request(page), true)().catch(() => undefined));
   }
-
-  if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith("/assets/")) {
-      event.respondWith(cacheFirst(request, SHELL_CACHE));
-    } else if (url.pathname.startsWith("/api/meteofrance")) {
-      event.respondWith(networkFirst(request, DATA_CACHE));
-    }
-    return;
+  for (const url of new Set(urls)) {
+    if (typeof url !== "string" || !url.startsWith("http")) continue;
+    const strategy = strategyFor(new Request(url), false);
+    if (strategy) tasks.push(strategy().catch(() => undefined));
   }
-
-  if (DATA_HOSTS.has(url.hostname)) {
-    event.respondWith(networkFirst(request, DATA_CACHE));
-  } else if (FONT_HOSTS.has(url.hostname)) {
-    event.respondWith(staleWhileRevalidate(request, SHELL_CACHE));
-  }
+  event.waitUntil(Promise.allSettled(tasks));
 });
 
 /* ------------------------------------------------------------------ */
