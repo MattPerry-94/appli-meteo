@@ -21,6 +21,18 @@ export default defineConfig({
     // toujours les notifications, que les tests d'alerte utilisent.
     channel: "chromium",
   },
+  projects: [
+    { name: "principal", testIgnore: /pwa\.spec\.ts/ },
+    {
+      // Service worker : ses délais réseau (8 s) et son enregistrement au
+      // chargement complet deviennent aléatoires quand la machine est saturée
+      // par les autres tests. Ces tests passent donc après, un par un.
+      name: "service-worker",
+      testMatch: /pwa\.spec\.ts/,
+      dependencies: ["principal"],
+      workers: 1,
+    },
+  ],
   webServer: {
     command: `npx vite build && npx vite preview --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,

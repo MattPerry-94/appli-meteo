@@ -4,8 +4,7 @@ import { expect, test } from "./test";
 
 // Service worker actif : c'est lui qu'on teste ici.
 test.use({ serviceWorkers: "allow" });
-// Il s'enregistre à l'événement load : sous charge (tests en parallèle), cela
-// peut prendre plus de temps que le délai par défaut.
+// Il s'enregistre à l'événement load, après le chargement complet de la page.
 test.slow();
 
 /** Attend que la page soit contrôlée par le service worker, sans recharger (première visite). */

@@ -44,6 +44,9 @@ export const test = base.extend<Fixtures>({
       const { recording, misses } = await replayNetwork(context, replay);
       await context.addInitScript(shiftClock, new Date(recording.recordedAt).getTime() + 60_000);
       await use(misses);
+      // Sans ça, la fermeture du contexte peut attendre indéfiniment une
+      // requête interceptée encore en vol (page rechargée, service worker).
+      await context.unrouteAll({ behavior: "ignoreErrors" });
     },
     { auto: true },
   ],
