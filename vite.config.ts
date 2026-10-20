@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -10,6 +11,10 @@ export default defineConfig(({ mode }) => {
   const meteoFranceApiKey = (env.METEOFRANCE_API_KEY ?? "").trim();
 
   return {
+    test: {
+      // e2e/ : tests Playwright (npm run e2e), pas Vitest.
+      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    },
     build: {
       sourcemap: 'hidden',
       rollupOptions: {
