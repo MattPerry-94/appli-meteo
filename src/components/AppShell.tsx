@@ -47,7 +47,9 @@ export default function AppShell() {
             <button
               type="button"
               onClick={toggleTheme}
-              aria-label={isDark ? "Passer en thème clair" : "Passer en thème sombre"}
+              // Le nom accessible reprend le texte visible (« Clair » / « Sombre ») :
+              // la commande vocale « clique sur Sombre » doit fonctionner.
+              aria-label={isDark ? "Thème sombre : passer en thème clair" : "Thème clair : passer en thème sombre"}
               className="btn btn-ghost rounded-2xl"
             >
               {isDark ? <Moon className="accent-ink size-4" /> : <SunMedium className="size-4 text-amber-500" />}

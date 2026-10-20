@@ -7,6 +7,7 @@ import { Badge } from "@/components/Badge";
 import { HourlyDetails } from "@/components/HourlyDetails";
 import type { CityForecastModelSet, ForecastSourceId, ForecastViewId } from "@/services/openMeteo";
 import { getForecastViewLabel } from "@/services/openMeteo";
+import { Dot, RangeArrow } from "@/components/Separators";
 import {
   formatDayLong,
   formatDayShort,
@@ -122,22 +123,22 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                     </div>
                     <div className="numeric mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
                       <span className="font-semibold text-slate-700 dark:text-zinc-300">
-                        {formatTempC(day.tempMinC)} <span className="font-normal text-slate-300 dark:text-zinc-600">→</span>{" "}
+                        {formatTempC(day.tempMinC)} <RangeArrow />{" "}
                         {formatTempC(day.tempMaxC)}
                         {activeView === "consensus" && formatSpreadC(day.tempMaxSpreadC) ? (
-                          <span className="ml-1 font-normal text-slate-400 dark:text-zinc-500" title="Écart entre modèles sur le maximum">
+                          <span className="ml-1 font-normal text-slate-500 dark:text-zinc-400" title="Écart entre modèles sur le maximum">
                             {formatSpreadC(day.tempMaxSpreadC)}
                           </span>
                         ) : null}
                       </span>
-                      <span className="text-slate-300 dark:text-zinc-700">•</span>
+                      <Dot />
                       <span>
                         Pluie {day.precipProbabilityPct === undefined ? missingModelText : formatPercent(day.precipProbabilityPct)}
                         {day.precipSumMm !== undefined && day.precipSumMm >= 0.1 ? ` · ${formatMm(day.precipSumMm)}` : ""}
                       </span>
-                      <span className="text-slate-300 dark:text-zinc-700">•</span>
+                      <Dot />
                       <span>Vent {day.windMaxKph === undefined ? missingModelText : formatWindKph(day.windMaxKph)}</span>
-                      <span className="text-slate-300 dark:text-zinc-700">•</span>
+                      <Dot />
                       <span>
                         UV {day.uvMax === undefined ? missingModelText : `${formatUv(day.uvMax)}${dayUv?.label ? ` · ${dayUv.label}` : ""}`}
                       </span>
@@ -178,7 +179,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="eyebrow">Détails</div>
-            <div className="display mt-1 truncate text-xl">{active ? formatDayLong(active.dateISO) : "—"}</div>
+            <div className="display mt-1 break-words text-xl">{active ? formatDayLong(active.dateISO) : "—"}</div>
           </div>
           <Badge tone="zinc" className="shrink-0">
             {activeBundle?.modelLabel ?? getForecastViewLabel(activeView)}
@@ -190,7 +191,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
             <div className="tile rounded-2xl p-3.5">
               <div className="eyebrow">Températures</div>
               <div className="numeric mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
-                {formatTempC(active?.tempMinC)} <span className="font-normal text-slate-300 dark:text-zinc-600">→</span>{" "}
+                {formatTempC(active?.tempMinC)} <RangeArrow />{" "}
                 {formatTempC(active?.tempMaxC)}
               </div>
               {activeView === "consensus" && (formatSpreadC(active?.tempMinSpreadC) || formatSpreadC(active?.tempMaxSpreadC)) ? (
@@ -260,7 +261,7 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
             <div className="tile rounded-2xl p-3.5">
               <div className="eyebrow">Ressenti</div>
               <div className="numeric mt-1.5 text-sm font-semibold text-slate-900 dark:text-zinc-50">
-                {formatTempC(active?.apparentTempMinC)} <span className="font-normal text-slate-300 dark:text-zinc-600">→</span>{" "}
+                {formatTempC(active?.apparentTempMinC)} <RangeArrow />{" "}
                 {formatTempC(active?.apparentTempMaxC)}
               </div>
             </div>
@@ -305,12 +306,12 @@ export function Forecast7Days(props: { forecastSet: CityForecastModelSet | null 
                         {item.day ? (
                           <>
                             <span className="font-semibold text-slate-800 dark:text-zinc-100">{itemVisual.label}</span>
-                            <span className="px-1 text-slate-300 dark:text-zinc-700">•</span>
+                            <Dot className="px-1" />
                             <span>
-                              {formatTempC(item.day.tempMinC)} <span className="text-slate-300 dark:text-zinc-600">→</span>{" "}
+                              {formatTempC(item.day.tempMinC)} <RangeArrow />{" "}
                               {formatTempC(item.day.tempMaxC)}
                             </span>
-                            <span className="px-1 text-slate-300 dark:text-zinc-700">•</span>
+                            <Dot className="px-1" />
                             <span>Pluie {formatPercent(item.day.precipProbabilityPct)}</span>
                           </>
                         ) : (

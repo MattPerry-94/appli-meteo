@@ -57,7 +57,7 @@ export function SeaCard(props: { sea: SeaState | null }) {
         </div>
       </dl>
 
-      <p className="mt-3 text-[11px] text-slate-400 dark:text-zinc-500">Point de mer le plus proche, modèles de vagues via Open-Meteo.</p>
+      <p className="mt-3 text-[11px] text-slate-500 dark:text-zinc-400">Point de mer le plus proche, modèles de vagues via Open-Meteo.</p>
     </Card>
   );
 }

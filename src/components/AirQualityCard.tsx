@@ -78,7 +78,7 @@ export function AirQualityCard(props: { air: AirQuality | null }) {
                   <LevelDot level={level.level} />
                   <span className="flex-1">{POLLEN_LABELS[pollen]}</span>
                   <span className="font-semibold">{level.label}</span>
-                  <span className="numeric w-20 text-right text-xs text-slate-400 dark:text-zinc-500">{Math.round(grains)} grains/m³</span>
+                  <span className="numeric w-20 text-right text-xs text-slate-500 dark:text-zinc-400">{Math.round(grains)} grains/m³</span>
                 </li>
               ))}
             </ul>
@@ -93,7 +93,7 @@ export function AirQualityCard(props: { air: AirQuality | null }) {
         </p>
       )}
 
-      <p className="mt-3 text-[11px] text-slate-400 dark:text-zinc-500">Modèle CAMS (Copernicus), résolution 10 à 40 km : valeurs indicatives.</p>
+      <p className="mt-3 text-[11px] text-slate-500 dark:text-zinc-400">Modèle CAMS (Copernicus), résolution 10 à 40 km : valeurs indicatives.</p>
     </Card>
   );
 }

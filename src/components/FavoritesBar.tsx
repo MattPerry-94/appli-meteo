@@ -19,7 +19,7 @@ export function FavoritesBar(props: {
 }) {
   if (!props.favorites.length) {
     return (
-      <div className="tile flex items-center gap-2 rounded-2xl px-4 py-3 text-sm text-slate-500 dark:text-zinc-400">
+      <div className="tile flex items-center gap-2 rounded-2xl px-4 py-3 text-sm text-slate-600 dark:text-zinc-400">
         <Star className="size-4 shrink-0" aria-hidden="true" />
         Ajoutez des villes en favori avec l'étoile de la ville active pour les retrouver ici.
       </div>
@@ -46,7 +46,7 @@ export function FavoritesBar(props: {
               >
                 <WeatherIcon kind={visual.kind} className="accent-ink size-5 shrink-0" />
                 <span className="min-w-0">
-                  <span className="block max-w-[8rem] truncate text-sm font-semibold text-slate-900 dark:text-zinc-50">{city.name}</span>
+                  <span title={city.name} className="block max-w-[8rem] truncate text-sm font-semibold text-slate-900 dark:text-zinc-50">{city.name}</span>
                   <span className="numeric block text-xs text-slate-500 dark:text-zinc-400">
                     <span className="font-semibold text-slate-800 dark:text-zinc-100">{formatTempC(brief?.tempC)}</span>
                     {brief ? ` · ${formatTempC(brief.tempMinC)} → ${formatTempC(brief.tempMaxC)}` : ""}

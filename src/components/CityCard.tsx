@@ -6,6 +6,7 @@ import { Badge } from "@/components/Badge";
 import type { CityForecastBundle } from "@/services/openMeteo";
 import { formatSpreadC, formatTempC, formatTimeHHmmFromISODateTime, formatUv, formatWindKph } from "@/utils/format";
 import { getOpenMeteoVisual, getUvLevel } from "@/utils/weather";
+import { Dot, RangeArrow } from "@/components/Separators";
 
 export function CityCard(props: { bundle: CityForecastBundle | null; selected?: boolean; onSelect?: () => void }) {
   // Sans onSelect la carte n'est pas interactive : la rendre en <button>
@@ -37,11 +38,11 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-zinc-400">
               <span className="accent-ink inline-flex items-center gap-1.5 font-medium">
                 <WeatherIcon kind={visual.kind} />
-                <span className="truncate">{visual.label}</span>
+                <span className="break-words">{visual.label}</span>
               </span>
-              {city?.postalCode ? <span className="text-slate-300 dark:text-zinc-600">•</span> : null}
+              {city?.postalCode ? <Dot /> : null}
               {city?.postalCode ? <span className="numeric">{city.postalCode}</span> : null}
-              {city?.adminArea ? <span className="text-slate-300 dark:text-zinc-600">•</span> : null}
+              {city?.adminArea ? <Dot /> : null}
               {city?.adminArea ? <span>{city.adminArea}</span> : null}
             </div>
           </div>
@@ -60,7 +61,7 @@ export function CityCard(props: { bundle: CityForecastBundle | null; selected?: 
             ) : null}
             <div className="numeric mt-1.5 text-xs text-slate-500 dark:text-zinc-400">
               <span className="font-semibold text-slate-700 dark:text-zinc-200">{formatTempC(today?.tempMinC)}</span>
-              <span className="px-1 text-slate-300 dark:text-zinc-600">→</span>
+              <RangeArrow className="px-1" />
               <span className="font-semibold text-slate-700 dark:text-zinc-200">{formatTempC(today?.tempMaxC)}</span>
             </div>
           </div>

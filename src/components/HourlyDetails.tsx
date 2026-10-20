@@ -26,7 +26,13 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
 
       <div className="divider-fade" />
 
-      <div className="grid max-h-[320px] gap-1.5 overflow-auto p-2.5">
+      {/* Zone qui défile : atteignable au clavier (flèches) et nommée pour les lecteurs d'écran. */}
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Détails par heure"
+        className="grid max-h-[320px] gap-1.5 overflow-auto rounded-b-2xl p-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--accent))]"
+      >
         {points.length ? (
           points.map((p) => {
             const v = getOpenMeteoVisual(p.weatherCode);
@@ -46,7 +52,7 @@ export function HourlyDetails(props: { bundle: CityForecastBundle | null; dateIS
                     <span className="text-sm font-bold text-slate-900 dark:text-zinc-50">
                       {formatTempC(p.tempC)}
                       {props.showReliability && formatSpreadC(p.tempSpreadC) ? (
-                        <span className="ml-1 text-xs font-medium text-slate-400 dark:text-zinc-500">{formatSpreadC(p.tempSpreadC)}</span>
+                        <span className="ml-1 text-xs font-medium text-slate-500 dark:text-zinc-400">{formatSpreadC(p.tempSpreadC)}</span>
                       ) : null}
                     </span>
                     {p.apparentTempC !== undefined ? <span>ressenti {formatTempC(p.apparentTempC)}</span> : null}

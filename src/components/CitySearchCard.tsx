@@ -46,7 +46,7 @@ export function CitySearchCard(props: {
           type="search"
           aria-label="Rechercher une ville"
           placeholder="Ex: Nice, Saint-Laurent-du-Var, Antibes…"
-          className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
+          className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500 focus-visible:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400"
         />
         {search.isSearching ? <div className="accent-dot size-2 shrink-0 animate-pulse rounded-full" /> : null}
       </div>

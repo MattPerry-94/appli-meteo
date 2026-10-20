@@ -65,7 +65,7 @@ export function ModelScoreCard(props: { report: ModelScoreReport | null; isLoadi
       )}
 
       {scores.length ? (
-        <p className="mt-3 text-[11px] text-slate-400 dark:text-zinc-500">
+        <p className="mt-3 text-[11px] text-slate-500 dark:text-zinc-400">
           Écart moyen, plus court = plus juste. ERA5 est une référence indépendante mais à maille large (9 à 25 km) : sur la côte ou en
           montagne, elle peut s'écarter du thermomètre local.
         </p>

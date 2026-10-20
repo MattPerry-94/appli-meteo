@@ -64,7 +64,7 @@ test("le thème sombre se choisit et se mémorise", async ({ page }) => {
   const html = page.locator("html");
   await expect(html).not.toHaveClass(/dark/);
 
-  await page.getByRole("button", { name: "Passer en thème sombre" }).click();
+  await page.getByRole("button", { name: /passer en thème sombre/ }).click();
   await expect(html).toHaveClass(/dark/);
   await page.reload();
   await expect(html).toHaveClass(/dark/);

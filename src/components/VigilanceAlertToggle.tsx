@@ -14,7 +14,7 @@ export function VigilanceAlertToggle(props: {
 
   if (props.support === "unsupported") {
     return (
-      <p className={cn("text-xs text-slate-400 dark:text-zinc-500", props.className)}>
+      <p className={cn("text-xs text-slate-500 dark:text-zinc-400", props.className)}>
         Ce navigateur ne permet pas les notifications : sur iPhone, ajoutez l'appli à l'écran d'accueil pour les activer.
       </p>
     );

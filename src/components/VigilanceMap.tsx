@@ -156,7 +156,7 @@ export function VigilanceMap(props: { snapshot: VigilanceSnapshot; highlightCode
           ))}
         </div>
 
-        <p className="mt-3 text-[11px] text-slate-400 dark:text-zinc-500">
+        <p className="mt-3 text-[11px] text-slate-500 dark:text-zinc-400">
           Métropole uniquement : l'outre-mer a ses propres bulletins, sur{" "}
           <a href="https://meteofrance.com/meteo-outre-mer" target="_blank" rel="noreferrer" className="underline underline-offset-2">
             meteofrance.com
@@ -171,7 +171,7 @@ export function VigilanceMap(props: { snapshot: VigilanceSnapshot; highlightCode
           {focusCode ? (
             <>
               <div className="display mt-1 text-xl">
-                {FRENCH_DEPARTMENT_NAMES[focusCode] ?? focusCode} <span className="numeric text-slate-400 dark:text-zinc-500">({focusCode})</span>
+                {FRENCH_DEPARTMENT_NAMES[focusCode] ?? focusCode} <span className="numeric text-slate-500 dark:text-zinc-400">({focusCode})</span>
               </div>
               {focus ? (
                 <div className="mt-3 space-y-2 text-sm">
@@ -209,7 +209,7 @@ export function VigilanceMap(props: { snapshot: VigilanceSnapshot; highlightCode
                     className="tile-interactive flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm"
                   >
                     <VigilanceDot level={level} className="ring-0" />
-                    <span className="min-w-0 flex-1 truncate text-slate-800 dark:text-zinc-100">{FRENCH_DEPARTMENT_NAMES[code] ?? code}</span>
+                    <span className="min-w-0 flex-1 break-words text-slate-800 dark:text-zinc-100">{FRENCH_DEPARTMENT_NAMES[code] ?? code}</span>
                     <span className="numeric text-xs text-slate-500 dark:text-zinc-400">{code}</span>
                   </button>
                 </li>

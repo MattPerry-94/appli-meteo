@@ -27,7 +27,7 @@
     /* Accents — valeurs par defaut, surchargees par [data-ambience] plus bas */
     --accent: 14 165 233;
     --accent-2: 99 102 241;
-    --accent-ink: 2 132 199;
+    --accent-ink: 3 105 161;
     --accent-ink-2: 79 70 229;
     --accent-deep: 12 74 110;
     /* Ancre sombre du degrade de temperature (passe au blanc en theme sombre) */
@@ -170,7 +170,7 @@
 :root[data-ambience="cool"] {
   --accent: 14 165 233;
   --accent-2: 99 102 241;
-  --accent-ink: 2 132 199;
+  --accent-ink: 3 105 161;
   --accent-ink-2: 79 70 229;
   --accent-deep: 12 74 110;
   --ring-focus: 14 165 233;

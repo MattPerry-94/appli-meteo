@@ -36,7 +36,7 @@ export function NextHourRain(props: { slots: RainSlot[] | null; fine: boolean; c
               >
                 <div className="chart-rain-swatch h-full rounded-full" style={{ opacity: INTENSITY_OPACITY[intensity] }} />
               </div>
-              <div className="numeric mt-1 text-[10px] text-slate-400 dark:text-zinc-500">
+              <div className="numeric mt-1 text-[10px] text-slate-500 dark:text-zinc-400">
                 {index === 0 ? "Maint." : slot.timeISO.slice(11, 16).replace(":", "h")}
               </div>
             </div>
@@ -45,7 +45,7 @@ export function NextHourRain(props: { slots: RainSlot[] | null; fine: boolean; c
       </div>
 
       {!props.fine ? (
-        <div className="mt-2 text-[11px] text-slate-400 dark:text-zinc-500">
+        <div className="mt-2 text-[11px] text-slate-500 dark:text-zinc-400">
           Hors France, les quarts d'heure sont interpolés depuis un modèle horaire : tendance indicative.
         </div>
       ) : null}

@@ -1,6 +1,7 @@
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import type { MeteoFranceDepartmentBulletin } from "@/services/meteoFranceVigilance";
+import { Dot } from "@/components/Separators";
 
 function formatBulletinDate(value: string) {
   return new Intl.DateTimeFormat("fr-FR", {
@@ -35,11 +36,11 @@ export function BulletinCard(props: { bulletin: MeteoFranceDepartmentBulletin | 
         <div className="mt-5 space-y-4">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
             <span>{bulletin.blocTitle}</span>
-            <span className="text-slate-300 dark:text-zinc-700">•</span>
+            <Dot />
             <span>{bulletin.typeName}</span>
             {bulletin.termName ? (
               <>
-                <span className="text-slate-300 dark:text-zinc-700">•</span>
+                <Dot />
                 <span>{bulletin.termName}</span>
               </>
             ) : null}
